@@ -6,6 +6,7 @@
 # Standard imports
 import os
 import sys
+import termcolor
 import unittest
 
 sys.path.insert(0, '..')
@@ -27,14 +28,30 @@ class ConfigTester(unittest.TestCase):
 
 
     def test_not_exitsted_file(self):
-        try:
-            cfg = outproc.Config('not-existed-file')
-            self.assertTrue(False)
-        except:
-            self.assertTrue(True)
+        cfg = outproc.Config('not-existed-file')
+        self.assertEqual(cfg.get_string('not-existed', 'default'), 'default')
+        self.assertEqual(cfg.get_int('not-existed', 123), 123)
 
 
-    def test_get_sample_value(self):
+    def test_get_string_value(self):
         cfg = outproc.Config(self.data_file('sample.conf'))
-        self.assertEqual(cfg.get_string_with_default('some', None), 'value')
-        self.assertEqual(cfg.get_string_with_default('not-existed', 'default'), 'default')
+        self.assertEqual(cfg.get_string('some'), 'value')
+        self.assertEqual(cfg.get_string('not-existed', 'default'), 'default')
+        self.assertEqual(cfg.get_string('some-int'), '123')
+
+
+    def test_get_int_value(self):
+        cfg = outproc.Config(self.data_file('sample.conf'))
+        self.assertEqual(cfg.get_int('some-int'), 123)
+        self.assertEqual(cfg.get_int('not-existed', 123), 123)
+        with self.assertRaises(ValueError):
+            cfg.get_int('not-an-int', 123)
+
+
+    def test_get_color_value(self):
+        cfg = outproc.Config(self.data_file('sample.conf'))
+        self.assertEqual(cfg.get_color('red', 'red'), '\x1b31[m')
+        self.assertEqual(cfg.get_color('error', 'normal'), '\x1b31[m\x1b1[m')
+        self.assertEqual(cfg.get_color('not-existed', 'normal'), termcolor.RESET)
+        with self.assertRaises(TypeError):
+            cfg.get_color('red')

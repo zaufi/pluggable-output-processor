@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# This file is a part of Pluggable Output Processor
+# Output processor for `make`
 #
 # Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
 #
@@ -17,18 +17,12 @@
 #
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-from outproc.config import Config
+import outproc
 
-SYSCONFDIR = '/etc/outproc'
-
-class Processor(object):
+class Processor(outproc.Processor):
 
     def __init__(self, config):
         self.config = config
 
-    def handle_stdout(self, line):
-        return line
-
-    def handle_stderr(self, line):
-        return line
