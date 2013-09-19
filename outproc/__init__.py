@@ -22,13 +22,30 @@ from outproc.config import Config
 
 SYSCONFDIR = '/etc/outproc'
 
+log = None
+try:
+    import portage.output
+    log = portage.output.EOutput()
+except ImportError:
+    class FakeLogger(object):
+        def einfo(self, msg):
+            print(msg)
+        def eerror(self, msg):
+            print(msg, file=sys.stderr)
+        def ewarn(self, msg):
+            print(msg)
+
+    log = FakeLogger()
+
+
 class Processor(object):
 
-    def __init__(self, config):
+    def __init__(self, config, binary):
         self.config = config
+        self.binary = binary
 
-    def handle_stdout(self, line):
+    def handle_line(self, line):
         return line
 
-    def handle_stderr(self, line):
-        return line
+    def eof(self):
+        pass

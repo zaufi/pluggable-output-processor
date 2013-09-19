@@ -36,6 +36,10 @@ class Config(object):
         self.filename = filename
         # Make an empty dict for configuration data
         self.data = {}
+        # Set some predefined values
+        self.normal_color = termcolor.RESET
+        # NOTE Konsole terminal from KDE supports itallic font style
+        termcolor.ATTRIBUTES['itallic'] = 3
 
         if not os.path.isfile(filename):
             return
@@ -82,7 +86,7 @@ class Config(object):
         assert(isinstance(default, str) or default is not None)
 
         def _make_color_string(s):
-            return '\x1b{}[m'.format(s)
+            return '\x1b[{}m'.format(s)
 
         colors = [c.strip() for c in (self.data[key] if key in self.data else default).split(',')]
         result = ''
@@ -97,10 +101,5 @@ class Config(object):
             elif c in termcolor.HIGHLIGHTS:
                 result += _make_color_string(termcolor.HIGHLIGHTS[c])
             else:
-                raise ValueError(
-                    'Invalid value of key `{}`: expected color specification, got "{}"'.format(
-                        key
-                      , self.data[key]
-                      )
-                  )
+                raise ValueError('Invalid value of key `{}`: expected color specification, got "{}"'.format(key, self.data[key]))
         return result
