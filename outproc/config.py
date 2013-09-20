@@ -57,7 +57,7 @@ class Config(object):
             for l in ifs.readlines():
                 # Strip possible comment lines
                 line_str = l.strip()
-                if line_str.startswith('#'):
+                if not line_str or line_str.startswith('#'):
                     continue
                 # Split by first '=' char
                 key, value = [item.strip() for item in line_str.split('=', 1)]

@@ -34,7 +34,7 @@ class Processor(outproc.Processor):
 
     def __init__(self, config, binary):
         super().__init__(config, binary)
-        self.error = config.get_color('error', 'normal,red,itallic')
+        self.error = config.get_color('error', 'normal,red')
         self.misc = config.get_color('misc', 'grey,bold')
         self.misc_path = config.get_color('misc-path', 'white')
         self.include = config.get_color('compiler-option-I', 'green')
@@ -55,7 +55,7 @@ class Processor(outproc.Processor):
 
 
     def _colorize_with_misc(self, line):
-        return self.misc + line + self.config.normal_color
+        return self.misc + line + self.config.reset_color
 
 
     def _is_look_like_cmake_compile(self, line):
