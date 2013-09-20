@@ -29,6 +29,7 @@ _SUCCESS2_RE = re.compile('^-- Found .*:\s.*$')
 _FAILURE_RE = re.compile('^-- .* - not found$')
 _FATAL_RE = re.compile('^CMake Error.*')
 
+
 class Processor(outproc.Processor):
 
     def __init__(self, config, binary):
