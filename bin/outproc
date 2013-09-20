@@ -142,7 +142,7 @@ class Application(object):
         po = select.epoll()                                 # Make a poll object
         self._make_async(process.stdout)                    # Switch STDOUT descriptor to async mode
         # Register descriptor for polling
-        po.register(process.stdout, select.EPOLLIN | select.EPOLLHUP | select.EPOLLET)
+        po.register(process.stdout, select.EPOLLIN | select.EPOLLHUP)
 
         eof = False
         read_buffer = b''
@@ -161,7 +161,7 @@ class Application(object):
                 # Check if input available
                 if event & select.EPOLLIN:
                     block = process.stdout.read()           # Read collected data
-                    while block is not None:
+                    while block is not None and block:
                         read_buffer += block                # Append just read block to a storage
                         pos = read_buffer.find(b'\n')       # Try to find line delimiter
                         while pos != -1:                    # Found?

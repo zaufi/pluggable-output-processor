@@ -18,8 +18,10 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import os
 import termcolor
+
 
 class Config(object):
     ''' Simple configuration data accessor
@@ -29,6 +31,9 @@ class Config(object):
         This class can read and give an access to that data in a easy to use way.
     '''
 
+    _RGB_COLOR_SPEC_RE = re.compile('rgb\s*\(\s*([0-5])\s*,\s*([0-5])\s*,\s*([0-5])\s*\)')
+    _GRAYSCALE_SPEC_RE = re.compile('gray\s*\(\s*([0-9]+)\s*\)')
+
     def __init__(self, filename):
         '''Read configuration data from a given file'''
 
@@ -36,8 +41,11 @@ class Config(object):
         self.filename = filename
         # Make an empty dict for configuration data
         self.data = {}
+
         # Set some predefined values
-        self.normal_color = termcolor.RESET
+        self.normal_color = '\x1b[38m'
+        self.reset_color = termcolor.RESET
+
         # NOTE Konsole terminal from KDE supports itallic font style
         termcolor.ATTRIBUTES['itallic'] = 3
 
@@ -75,7 +83,10 @@ class Config(object):
         try:
             return int(self.data[key]) if key in self.data else default
         except:
-            raise ValueError('Invalid value of key `{}`: expected integer, got "{}"'.format(key, self.data[key]))
+            raise ValueError(
+                'Invalid value of key `{}`: expected integer, got "{}" [{}]'.
+                format(key, self.data[key], self.filename)
+              )
 
 
     def get_color(self, key, default):
@@ -85,7 +96,7 @@ class Config(object):
         assert(isinstance(key, str))
         assert(isinstance(default, str) or default is not None)
 
-        colors = [c.strip() for c in (self.data[key] if key in self.data else default).split(',')]
+        colors = [c.strip() for c in (self.data[key] if key in self.data else default).split('+')]
         result = ''
 
         delimiter = ''
@@ -105,6 +116,36 @@ class Config(object):
             elif c in termcolor.HIGHLIGHTS:
                 result += delimiter + str(termcolor.HIGHLIGHTS[c])
                 delimiter = ';'
+            elif self._RGB_COLOR_SPEC_RE.match(c):
+                # BUG Fucking Python! Why not to assign and check a variable inside of `if`
+                # TODO Avoid double regex match
+                match = self._RGB_COLOR_SPEC_RE.search(c)
+                try:
+                    r = self._validate_rgb_component(int(match.group(1)))
+                    g = self._validate_rgb_component(int(match.group(2)))
+                    b = self._validate_rgb_component(int(match.group(3)))
+                    index = self._rgb_to_index(r, g, b)
+                    result += delimiter + '38;5;' + str(index)
+                    delimiter = ';'
+                except ValueError:
+                    raise RuntimeError(
+                        'Invalid value of key `{}`: invalid RGB color specification "{}" [{}]'.
+                        format(key, c, self.filename)
+                      )
+            elif self._GRAYSCALE_SPEC_RE.match(c):
+                # BUG Fucking Python! Why not to assign and check a variable inside of `if`
+                # TODO Avoid double regex match
+                match = self._GRAYSCALE_SPEC_RE.search(c)
+                try:
+                    g = self._validate_grayscale(int(match.group(1)))
+                    index = self._grayscale_to_index(g)
+                    result += delimiter + '38;5;' + str(index)
+                    delimiter = ';'
+                except ValueError:
+                    raise RuntimeError(
+                        'Invalid value of key `{}`: invalid grayscale color specification "{}" [{}]'.
+                        format(key, c, self.filename)
+                      )
             else:
                 try:
                     index = int(c)
@@ -112,5 +153,31 @@ class Config(object):
                         result += delimiter + '38;5;' + c
                         delimiter = ';'
                 except ValueError:
-                    raise RuntimeError('Invalid value of key `{}`: expected color specification, got "{}"'.format(key, c))
+                    raise RuntimeError(
+                        'Invalid value of key `{}`: expected color specification "{}" [{}]'.
+                        format(key, c, self.filename)
+                      )
         return '\x1b[' + result + 'm'
+
+
+    def _validate_rgb_component(self, c):
+        assert(isinstance(c, int))
+        if c < 0 or 5 < c:
+            raise ValueError('RGB component is out of range')
+        return c
+
+
+    def _rgb_to_index(self, r, g, b):
+        return r * 36 + g * 6 + b + 16
+
+
+    def _validate_grayscale(self, c):
+        assert(isinstance(c, int))
+        if c < 0 or 24 < c:
+            raise ValueError('Grayscale index is out of range')
+        return c
+
+
+    def _grayscale_to_index(self, g):
+        assert((232 + g) < 256)
+        return 232 + g

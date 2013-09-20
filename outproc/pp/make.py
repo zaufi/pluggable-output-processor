@@ -53,7 +53,7 @@ class Processor(outproc.Processor):
             if is_error_message:
                 stars_idx = line.index('***')
                 line = line[:stars_idx] + self.error + line[stars_idx:]
-            line += self.config.normal_color
+            line += self.config.reset_color
         elif line.startswith('/usr/bin/cmake'):
             return self._colorize_with_misc(line)
 
