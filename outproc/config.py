@@ -85,21 +85,32 @@ class Config(object):
         assert(isinstance(key, str))
         assert(isinstance(default, str) or default is not None)
 
-        def _make_color_string(s):
-            return '\x1b[{}m'.format(s)
-
         colors = [c.strip() for c in (self.data[key] if key in self.data else default).split(',')]
         result = ''
 
+        delimiter = ''
         for c in colors:
-            if c == 'normal':
-                result += termcolor.RESET
+            if c == 'reset':
+                result += delimiter + '0'
+                delimiter = ';'
+            elif c == 'normal':
+                result += delimiter + '38'
+                delimiter = ';'
             elif c in termcolor.COLORS:
-                result += _make_color_string(termcolor.COLORS[c])
+                result += delimiter + str(termcolor.COLORS[c])
+                delimiter = ';'
             elif c in termcolor.ATTRIBUTES:
-                result += _make_color_string(termcolor.ATTRIBUTES[c])
+                result += delimiter + str(termcolor.ATTRIBUTES[c])
+                delimiter = ';'
             elif c in termcolor.HIGHLIGHTS:
-                result += _make_color_string(termcolor.HIGHLIGHTS[c])
+                result += delimiter + str(termcolor.HIGHLIGHTS[c])
+                delimiter = ';'
             else:
-                raise ValueError('Invalid value of key `{}`: expected color specification, got "{}"'.format(key, self.data[key]))
-        return result
+                try:
+                    index = int(c)
+                    if 15 < index and index < 256:
+                        result += delimiter + '38;5;' + c
+                        delimiter = ';'
+                except ValueError:
+                    raise RuntimeError('Invalid value of key `{}`: expected color specification, got "{}"'.format(key, c))
+        return '\x1b[' + result + 'm'
