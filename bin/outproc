@@ -163,12 +163,14 @@ class Application(object):
                     block = process.stdout.read()           # Read collected data
                     while block is not None and block:
                         read_buffer += block                # Append just read block to a storage
-                        pos = read_buffer.find(b'\n')       # Try to find line delimiter
+                        pos = read_buffer.find(b'\n')       # Try to find a line delimiter
                         while pos != -1:                    # Found?
                             line = read_buffer[:pos].decode('utf-8')
-                            sys.stdout.write(processor.handle_line(line))
-                            sys.stdout.write('\n')
-                            sys.stdout.flush()
+                            line = processor.handle_line(line)
+                            if line is not None:            # Ignore/hide the line if post-processor returns None
+                                sys.stdout.write(line)
+                                sys.stdout.write('\n')
+                                sys.stdout.flush()
                             pos +=1                         # Remove '\n' from the input
                             read_buffer = read_buffer[pos:] # Cut just processed line
                             pos = read_buffer.find(b'\n')   # Is there some more line remain?
@@ -177,7 +179,11 @@ class Application(object):
 
                 elif event & select.EPOLLHUP:
                     eof = True
-                    assert(len(read_buffer) == 0)
+                    if len(read_buffer) != 0:
+                        line = processor.handle_line(read_buffer.decode('utf-8'))
+                        if line is not None:
+                            sys.stdout.write(line)
+                            sys.stdout.flush()
                     processor.eof()                         # Notify processor about EOF
                 else:
                     assert(not 'Unexpected event {}'.format(event))

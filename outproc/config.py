@@ -99,6 +99,10 @@ class Config(object):
         colors = [c.strip() for c in (self.data[key] if key in self.data else default).split('+')]
         result = ''
 
+        # Handle special value 'none' as color inhibitor
+        if 'none' in colors:
+            return result
+
         delimiter = ''
         for c in colors:
             if c == 'reset':

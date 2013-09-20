@@ -19,12 +19,16 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import re
+import os
 import outproc
+import re
+import shlex
+
+_KNOWN_COMPILERS = ['c++', 'g++', 'gcc']
 
 _MAKE_MGS_RE = re.compile('make(\[[0-9]+\])?: ')
 _MAKE_ERROR_MSG_RE = re.compile('make(\[[0-9]+\])?: \*\*\*')
-
+_MAKE_MISC_PATH_RE = re.compile('.*(`.*\').*')
 
 class Processor(outproc.Processor):
 
@@ -32,6 +36,14 @@ class Processor(outproc.Processor):
         super().__init__(config, binary)
         self.error = config.get_color('error', 'normal,red,itallic')
         self.misc = config.get_color('misc', 'grey,bold')
+        self.misc_path = config.get_color('misc-path', 'white')
+        self.include = config.get_color('compiler-option-I', 'green')
+        self.macro_define = config.get_color('compiler-option-D', 'yellow')
+        self.macro_undefine = config.get_color('compiler-option-U', 'yellow')
+        self.optimization = config.get_color('compiler-option-f', 'cian')
+        self.target_arch = config.get_color('compiler-option-m', 'magenta')
+        self.warning = config.get_color('compiler-option-W', 'yellow+bold')
+        self.lib_paths = config.get_color('compiler-option-L', 'green')
 
 
     def _detect_make_message(self, line):
@@ -46,6 +58,76 @@ class Processor(outproc.Processor):
         return self.misc + line + self.config.normal_color
 
 
+    def _is_look_like_cmake_compile(self, line):
+        ''' Try to parse possible cmake compile command line...
+            maybe we can higlight gcc options?
+
+            CMake + make produce compile commands in the following format:
+                cd <work-dir> && <compiler> <options>
+
+            This function will try to detect first 3 tokens, and if everything
+            is found, the 4th assumed to be a compiler executable name...
+        '''
+        score = 0
+        args = None
+        try:
+            args = shlex.split(line)
+        except:
+            return (False, [], 0)
+        assert(args is not None)
+        i = 0
+        for arg in args:
+            if score == 4:
+                return (True, args, i)
+            elif score == 0 and arg == 'cd' or arg == '\x1b[0mcd':
+                score += 1
+            if score == 0 and os.path.isfile(arg) and os.path.basename(arg) in _KNOWN_COMPILERS:
+                score += 4
+            elif score == 1 and os.path.isdir(arg):
+                score += 1
+            elif score == 2 and arg == '&&':
+                score += 1
+            elif score == 3 and os.path.isfile(arg) and os.path.basename(arg) in _KNOWN_COMPILERS:
+                score += 1
+            i += 1
+        return (False, args, i)
+
+
+    def _try_get_color_for_option(self, option):
+        paint_next_arg = (len(option) == 2)
+        if option.startswith('-I'):
+            return (self.include, paint_next_arg)
+        elif option.startswith('-L'):
+            return (self.lib_paths, paint_next_arg)
+        elif option.startswith('-D'):
+            return (self.macro_define, paint_next_arg)
+        elif option.startswith('-U'):
+            return (self.macro_undefine, paint_next_arg)
+        elif option.startswith('-f'):
+            return (self.optimization, paint_next_arg)
+        elif option.startswith('-m'):
+            return (self.target_arch, paint_next_arg)
+        elif option.startswith('-W') and not option.startswith('-Wl,'):
+            return (self.warning, paint_next_arg)
+        return (None, False)
+
+
+    def _colorize_option(self, option, color, line, last_find_idx):
+        assert(
+                isinstance(option, str)
+            and isinstance(color, str)
+            and isinstance(line, str)
+            and isinstance(last_find_idx, int)
+          )
+        # Find corresponding option at raw line
+        pos = line.find(option, last_find_idx)
+        assert(pos != -1)
+        # Colorise it
+        line = line[:pos] + color + line[pos:pos+len(option)] + self.config.reset_color + line[pos+len(option):]
+        last_find_idx = pos + len(color) + len(self.config.reset_color)
+        return (line, last_find_idx)
+
+
     def handle_line(self, line):
         is_make_message, is_error_message = self._detect_make_message(line)
         if is_make_message:
@@ -53,8 +135,36 @@ class Processor(outproc.Processor):
             if is_error_message:
                 stars_idx = line.index('***')
                 line = line[:stars_idx] + self.error + line[stars_idx:]
+            else:
+                # Highlight path enclosed in `'
+                pos = line.find('`')
+                if pos != -1:
+                    close_pos = line.index("'")
+                    assert(close_pos != -1)
+                    close_pos += 1
+                    line = line[:pos] + self.misc_path + line[pos:close_pos] + self.misc + line[close_pos:]
             line += self.config.reset_color
+        # Lines started w/ '/usr/bin/make' paint w/ `misc' color
+        elif line.startswith(self.binary):
+            return self._colorize_with_misc(line)
+        # Lines started w/ '/usr/bin/cmake' paint w/ `misc' color
+        # (it is also a not interested information)
         elif line.startswith('/usr/bin/cmake'):
             return self._colorize_with_misc(line)
+        else:
+            is_compiler_cmd_line, args, first_compiler_option_idx = self._is_look_like_cmake_compile(line)
+            last_find_idx = 0
+            option_color = None
+            paint_next_arg = False
+            if is_compiler_cmd_line:
+                for i in range(first_compiler_option_idx, len(args)):
+                    if paint_next_arg:
+                        line, last_find_idx = self._colorize_option(args[i], option_color, line, last_find_idx)
+                        paint_next_arg = False
+                        continue
+                    # Try to get color for current option
+                    option_color, paint_next_arg = self._try_get_color_for_option(args[i])
+                    if option_color is not None:
+                        line, last_find_idx = self._colorize_option(args[i], option_color, line, last_find_idx)
 
         return line

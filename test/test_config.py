@@ -54,5 +54,6 @@ class ConfigTester(unittest.TestCase):
         self.assertEqual(cfg.get_color('error', 'normal'), '\x1b[31;1m')
         self.assertEqual(cfg.get_color('not-existed', 'normal'), '\x1b[38m')
         self.assertEqual(cfg.get_color('some-int', 'reset'), '\x1b[38;5;123m')
+        self.assertEqual(cfg.get_color('none', 'none'), '')
         with self.assertRaises(TypeError):
             cfg.get_color('red')
