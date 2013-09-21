@@ -54,3 +54,7 @@ class Processor(object):
 
     def eof(self):
         pass
+
+    @staticmethod
+    def config_file_name(module_name):
+        return module_name + '.conf'

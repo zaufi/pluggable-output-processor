@@ -89,10 +89,10 @@ class Application(object):
             sys.exit(1)
 
 
-    def _load_config(self):
+    def _load_config(self, config_file_name):
         # Try to load configuration for selected plugin
         try:
-            return outproc.Config(os.path.join(outproc.SYSCONFDIR, self.basename + '.conf'))
+            return outproc.Config(os.path.join(outproc.SYSCONFDIR, config_file_name))
         except Exception as e:
             log.eerror('Unable to load configuration data: {}'.format(e))
             sys.exit(1)
@@ -135,7 +135,7 @@ class Application(object):
 
         self._find_wrapped_binary()
         self._load_pp_module()
-        config = self._load_config()
+        config = self._load_config(self.pp_mod.Processor.config_file_name(self.basename))
         processor = self._create_output_processor(config)
         process = self._start_wrapped_binary()
 

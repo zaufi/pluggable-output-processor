@@ -34,8 +34,8 @@ class Processor(outproc.Processor):
 
     def __init__(self, config, binary):
         super().__init__(config, binary)
-        self.error = config.get_color('error', 'normal,red')
-        self.misc = config.get_color('misc', 'grey,bold')
+        self.error = config.get_color('error', 'normal+red')
+        self.misc = config.get_color('misc', 'grey+bold')
         self.misc_path = config.get_color('misc-path', 'white')
         self.include = config.get_color('compiler-option-I', 'green')
         self.macro_define = config.get_color('compiler-option-D', 'yellow')
@@ -104,11 +104,11 @@ class Processor(outproc.Processor):
         elif option.startswith('-U'):
             return (self.macro_undefine, paint_next_arg)
         elif option.startswith('-f'):
-            return (self.optimization, paint_next_arg)
+            return (self.optimization, False)
         elif option.startswith('-m'):
-            return (self.target_arch, paint_next_arg)
+            return (self.target_arch, False)
         elif option.startswith('-W') and not option.startswith('-Wl,'):
-            return (self.warning, paint_next_arg)
+            return (self.warning, False)
         return (None, False)
 
 

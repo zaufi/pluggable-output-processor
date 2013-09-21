@@ -50,10 +50,10 @@ class ConfigTester(unittest.TestCase):
 
     def test_get_color_value(self):
         cfg = outproc.Config(self.data_file('sample.conf'))
-        self.assertEqual(cfg.get_color('red', 'red'), '\x1b[31m')
-        self.assertEqual(cfg.get_color('error', 'normal'), '\x1b[31;1m')
-        self.assertEqual(cfg.get_color('not-existed', 'normal'), '\x1b[38m')
-        self.assertEqual(cfg.get_color('some-int', 'reset'), '\x1b[38;5;123m')
+        self.assertEqual(cfg.get_color('red', 'red'), '\x1b[0;31m')
+        self.assertEqual(cfg.get_color('error', 'normal'), '\x1b[0;31;1m')
+        self.assertEqual(cfg.get_color('not-existed', 'normal'), '\x1b[0;38m')
+        self.assertEqual(cfg.get_color('some-int', 'reset'), '\x1b[0;38;5;123m')
         self.assertEqual(cfg.get_color('none', 'none'), '')
         with self.assertRaises(TypeError):
             cfg.get_color('red')

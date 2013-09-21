@@ -34,9 +34,9 @@ class Processor(outproc.Processor):
 
     def __init__(self, config, binary):
         super().__init__(config, binary)
-        self.success = config.get_color('success-test', 'green,bold')
-        self.failure = config.get_color('fail-test', 'red,bold')
-        self.fatal = config.get_color('fatal-error', 'red,bold')
+        self.success = config.get_color('success-test', 'green+bold')
+        self.failure = config.get_color('fail-test', 'red+bold')
+        self.fatal = config.get_color('fatal-error', 'red+bold')
 
 
     def _colorize(self, color, line):

@@ -103,23 +103,19 @@ class Config(object):
         if 'none' in colors:
             return result
 
-        delimiter = ''
+        need_reset = True
         for c in colors:
             if c == 'reset':
-                result += delimiter + '0'
-                delimiter = ';'
+                result += ';0'
+                need_reset = False
             elif c == 'normal':
-                result += delimiter + '38'
-                delimiter = ';'
+                result += ';38'
             elif c in termcolor.COLORS:
-                result += delimiter + str(termcolor.COLORS[c])
-                delimiter = ';'
+                result += ';' + str(termcolor.COLORS[c])
             elif c in termcolor.ATTRIBUTES:
-                result += delimiter + str(termcolor.ATTRIBUTES[c])
-                delimiter = ';'
+                result += ';' + str(termcolor.ATTRIBUTES[c])
             elif c in termcolor.HIGHLIGHTS:
-                result += delimiter + str(termcolor.HIGHLIGHTS[c])
-                delimiter = ';'
+                result += ';' + str(termcolor.HIGHLIGHTS[c])
             elif self._RGB_COLOR_SPEC_RE.match(c):
                 # BUG Fucking Python! Why not to assign and check a variable inside of `if`
                 # TODO Avoid double regex match
@@ -129,8 +125,7 @@ class Config(object):
                     g = self._validate_rgb_component(int(match.group(2)))
                     b = self._validate_rgb_component(int(match.group(3)))
                     index = self._rgb_to_index(r, g, b)
-                    result += delimiter + '38;5;' + str(index)
-                    delimiter = ';'
+                    result += ';38;5;' + str(index)
                 except ValueError:
                     raise RuntimeError(
                         'Invalid value of key `{}`: invalid RGB color specification "{}" [{}]'.
@@ -143,8 +138,7 @@ class Config(object):
                 try:
                     g = self._validate_grayscale(int(match.group(1)))
                     index = self._grayscale_to_index(g)
-                    result += delimiter + '38;5;' + str(index)
-                    delimiter = ';'
+                    result += ';38;5;' + str(index)
                 except ValueError:
                     raise RuntimeError(
                         'Invalid value of key `{}`: invalid grayscale color specification "{}" [{}]'.
@@ -154,14 +148,13 @@ class Config(object):
                 try:
                     index = int(c)
                     if 15 < index and index < 256:
-                        result += delimiter + '38;5;' + c
-                        delimiter = ';'
+                        result += ';38;5;' + c
                 except ValueError:
                     raise RuntimeError(
                         'Invalid value of key `{}`: expected color specification "{}" [{}]'.
                         format(key, c, self.filename)
                       )
-        return '\x1b[' + result + 'm'
+        return '\x1b[' + ('0' if need_reset else '') + result + 'm'
 
 
     def _validate_rgb_component(self, c):
