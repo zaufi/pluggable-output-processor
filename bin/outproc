@@ -26,6 +26,7 @@ import portage.output
 import sys
 import select
 import subprocess
+import traceback
 
 # Project specific imports
 import outproc
@@ -72,22 +73,16 @@ class Application(object):
 
     def _load_pp_module(self):
         # Look for a plugin to post-process an output of the given command
-        self.pp_mod = __import__(
-            'outproc.pp.{}'.format(self.basename)
-          , globals()
-          , locals()
-          , ['outproc.pp']
-          )
-        #try:
-            #self.pp_mod = __import__(
-                #'outproc.pp.{}'.format(self.basename)
-              #, globals()
-              #, locals()
-              #, ['outproc.pp']
-              #)
-        #except:
-            #log.eerror('Failed to import module {}'.format(self.basename))
-            #sys.exit(1)
+        try:
+            self.pp_mod = __import__(
+                'outproc.pp.{}'.format(self.basename)
+              , globals()
+              , locals()
+              , ['outproc.pp']
+              )
+        except:
+            outproc.report_error_with_backtrace('Failed to import module {}'.format(self.basename))
+            sys.exit(1)
 
         # Make sure the module found has a Processor class
         if not hasattr(self.pp_mod, 'Processor') or not issubclass(self.pp_mod.Processor, outproc.Processor):
@@ -99,19 +94,18 @@ class Application(object):
         # Try to load configuration for selected plugin
         try:
             return outproc.Config(os.path.join(outproc.SYSCONFDIR, config_file_name))
-        except Exception as e:
-            log.eerror('Unable to load configuration data: {}'.format(e))
+        except:
+            outproc.report_error_with_backtrace('Unable to load configuration data')
             sys.exit(1)
 
 
     def _create_output_processor(self, config):
-        return self.pp_mod.Processor(config, self.binary)
-        #try:
-            ## Make an instance of an output processor
-            #return self.pp_mod.Processor(config, self.binary)
-        #except Exception as e:
-            #log.eerror('Unable to make a preprocessor instance: {}'.format(e))
-            #sys.exit(1)
+        try:
+            # Make an instance of an output processor
+            return self.pp_mod.Processor(config, self.binary)
+        except:
+            outproc.report_error_with_backtrace('Unable to make a preprocessor instance')
+            sys.exit(1)
 
 
     def _make_async(self, fd):
@@ -120,15 +114,19 @@ class Application(object):
 
 
     def _start_wrapped_binary(self):
-        # Execute wrapped (and found) binary
-        return subprocess.Popen(
-            [self.binary] + sys.argv[1:]
-          , bufsize=1                                       # Per line buffering
-          , stdin=sys.stdin                                 # TODO Need to pass input to subprocess as well
-          , stdout=subprocess.PIPE
-          , stderr=subprocess.STDOUT                        # NOTE Redirect STDERR to STDOUT
-          , shell=False                                     # No shell needed
-          )
+        try:
+            # Execute wrapped (and found) binary
+            return subprocess.Popen(
+                [self.binary] + sys.argv[1:]
+              , bufsize=1                                   # Per line buffering
+              , stdin=sys.stdin                             # TODO Need to pass input to subprocess as well
+              , stdout=subprocess.PIPE
+              , stderr=subprocess.STDOUT                    # NOTE Redirect STDERR to STDOUT
+              , shell=False                                 # No shell needed
+              )
+        except:
+            outproc.report_error_with_backtrace('Unable to start wrapped executable ({})'.format(self.binary))
+            sys.exit(1)
 
 
     def run(self):
@@ -147,7 +145,7 @@ class Application(object):
         process = self._start_wrapped_binary()
 
         po = select.epoll()                                 # Make a poll object
-        self._make_async(process.stdout)                    # Switch STDOUT descriptor to async mode
+        self._make_async(process.stdout)                    # Switch STDOUT descriptor to asynchronous mode
         # Register descriptor for polling
         po.register(process.stdout, select.EPOLLIN | select.EPOLLHUP)
 
@@ -173,7 +171,12 @@ class Application(object):
                         pos = read_buffer.find(b'\n')       # Try to find a line delimiter
                         while pos != -1:                    # Found?
                             line = read_buffer[:pos].decode('utf-8')
-                            line = processor.handle_line(line)
+                            try:
+                                line = processor.handle_line(line)
+                            except:
+                                outproc.report_error_with_backtrace(
+                                    'Post-process module ({}) failure'.format(self.basename)
+                                  )
                             if line is not None:            # Ignore/hide the line if post-processor returns None
                                 sys.stdout.write(line)
                                 sys.stdout.write('\n')

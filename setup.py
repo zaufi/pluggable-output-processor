@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Install script for `outproc`
+# Install script for Pluggable Output Processor
 #
 # Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
 #
@@ -27,8 +27,9 @@ distutils.core.setup(
   , maintainer       = 'Alex Turbov'
   , maintainer_email = 'I.zaufi@gmail.com'
   , url              = 'https://github.com/zaufi/pluggable-output-processor'
-  , packages         = ['outproc']
+  , packages         = ['outproc', 'outproc.pp']
   , scripts          = ['bin/outproc']
+  , data_files       = [('etc/outproc', ['conf/cmake.conf', 'conf/gcc.conf', 'conf/make.conf'])]
   , license          = 'GPL-3'
   , classifiers      = [
         'Development Status :: 4 - Beta'

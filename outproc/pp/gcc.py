@@ -27,7 +27,6 @@ import shlex
 
 from outproc.cpp_helpers import SimpleCppLexer, SnippetSanitizer
 
-
 _LOCATION_RE = re.compile('([^ :]+?):([0-9]+(,|:[0-9]+[:,]?)?)?')
 # /tmp/ccUlKMZA.o:zz.cc:function main: error: undefined reference to 'boost::iostreams::zlib::default_strategy'
 _LINK_ERROR_RE = re.compile(':function (.*): error: ')

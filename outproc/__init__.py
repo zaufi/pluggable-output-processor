@@ -18,7 +18,12 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+import traceback
+
+# Inject nested module into the scope
 from outproc.config import Config
+
 
 SYSCONFDIR = '/etc/outproc'
 
@@ -53,3 +58,17 @@ class Processor(object):
     @staticmethod
     def config_file_name(module_name):
         return module_name + '.conf'
+
+
+def report_error_with_backtrace(intro_message):
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    log.eerror(
+        '{} due {} exception: {}'.format(
+            intro_message
+          , exc_type.__name__
+          , exc_value
+          )
+        )
+    for t in traceback.extract_tb(exc_traceback)[1:]:
+        log.eerror('  {}:{}: at {}'.format(t[0], t[1], t[2]))
+        log.eerror('    {}'.format(t[3]))
