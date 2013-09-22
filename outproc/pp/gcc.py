@@ -21,6 +21,7 @@
 
 import os
 import outproc
+import outproc.term
 import re
 import shlex
 
@@ -40,6 +41,7 @@ class Processor(outproc.Processor):
 
     def __init__(self, config, binary):
         super().__init__(config, binary)
+        self.prev_line = None
         self.error = config.get_color('error', 'red')
         self.warning = config.get_color('warning', 'yellow')
         self.notice = config.get_color('notice', 'green')
@@ -53,7 +55,8 @@ class Processor(outproc.Processor):
         self.code_data_member = config.get_color('code-data-member', 'normal')
         self.code_preprocessor = config.get_color('code-preprocessor', 'green')
         self.code_number = config.get_color('code-numeric-literal', 'blue+bold')
-
+        self.code_cursor = outproc.term.fg2bg(config.get_color('code-cursor', 'red', with_reset=False))
+        self.nl = config.get_bool('new-line-after-code', True)
 
     def _inject_color_at(self, line, color, pos):
         return line[:pos] + color + line[pos:]
@@ -158,21 +161,21 @@ class Processor(outproc.Processor):
         #line = self._inject_color_at(line, self.error, start_at)
         line = self._try_colorize_location(line, self.error)
         line = self._try_code_snippets(line, self.error)
-        return line + self.config.reset_color
+        return line + self.config.color.reset
 
 
     def _handle_warning(self, line, start_at):
         #line = self._inject_color_at(line, self.warning, start_at)
         line = self._try_colorize_location(line, self.warning)
         line = self._try_code_snippets(line, self.warning)
-        return line + self.config.reset_color
+        return line + self.config.color.reset
 
 
     def _handle_notice(self, line):
         line = self._try_colorize_location(line, self.notice)
         line = self._try_code_snippets(line, self.notice)
         line = self._inject_color_at(line, self.notice, 0)
-        return line + self.config.reset_color
+        return line + self.config.color.reset
 
 
     def _handle_notice_with_code(self, line, code_start_pos):
@@ -180,7 +183,7 @@ class Processor(outproc.Processor):
         return line[:code_start_pos] \
           + self.code \
           + self._handle_code_snippet(line[code_start_pos:], True) \
-          + self.config.reset_color
+          + self.config.color.reset
 
 
     def handle_line(self, line):
@@ -227,7 +230,20 @@ class Processor(outproc.Processor):
             return self._handle_notice(line)
 
         if line.strip() != '^' and line[0] == ' ':
-            line = self.code + self._handle_code_snippet(line, True) + self.config.reset_color
+            assert(self.prev_line is None)
+            self.prev_line = line
+            return None
+
+        if line.strip() == '^':
+            assert(self.prev_line is not None)
+            pos = len(line)
+            line = self.code + self._handle_code_snippet(self.prev_line, True) + self.config.color.reset
+
+            # Find a cursor position for a transformed line
+            pos = outproc.term.pos_to_offset(line, pos)
+            line = line[:pos-1] + self.code_cursor + line[pos-1:pos] + self.config.color.normal_bg \
+              + line[pos:] + ('\n' if self.nl else '')
+            self.prev_line = None
 
         # Return unmodified line
         return line

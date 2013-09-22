@@ -72,16 +72,22 @@ class Application(object):
 
     def _load_pp_module(self):
         # Look for a plugin to post-process an output of the given command
-        try:
-            self.pp_mod = __import__(
-                'outproc.pp.{}'.format(self.basename)
-              , globals()
-              , locals()
-              , ['outproc.pp']
-              )
-        except:
-            log.eerror('Failed to import module {}'.format(self.basename))
-            sys.exit(1)
+        self.pp_mod = __import__(
+            'outproc.pp.{}'.format(self.basename)
+          , globals()
+          , locals()
+          , ['outproc.pp']
+          )
+        #try:
+            #self.pp_mod = __import__(
+                #'outproc.pp.{}'.format(self.basename)
+              #, globals()
+              #, locals()
+              #, ['outproc.pp']
+              #)
+        #except:
+            #log.eerror('Failed to import module {}'.format(self.basename))
+            #sys.exit(1)
 
         # Make sure the module found has a Processor class
         if not hasattr(self.pp_mod, 'Processor') or not issubclass(self.pp_mod.Processor, outproc.Processor):
@@ -99,12 +105,13 @@ class Application(object):
 
 
     def _create_output_processor(self, config):
-        try:
-            # Make an instance of an output processor
-            return self.pp_mod.Processor(config, self.binary)
-        except Exception as e:
-            log.eerror('Unable to make a preprocessor instance: {}'.format(e))
-            sys.exit(1)
+        return self.pp_mod.Processor(config, self.binary)
+        #try:
+            ## Make an instance of an output processor
+            #return self.pp_mod.Processor(config, self.binary)
+        #except Exception as e:
+            #log.eerror('Unable to make a preprocessor instance: {}'.format(e))
+            #sys.exit(1)
 
 
     def _make_async(self, fd):

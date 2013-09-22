@@ -43,8 +43,12 @@ class Config(object):
         self.data = {}
 
         # Set some predefined values
-        self.normal_color = '\x1b[38m'
-        self.reset_color = termcolor.RESET
+        class dummy:
+            pass
+        self.color = dummy
+        setattr(self.color, 'normal', '\x1b[38m')
+        setattr(self.color, 'normal_bg', '\x1b[48m')
+        setattr(self.color, 'reset', termcolor.RESET)
 
         # NOTE Konsole terminal from KDE supports itallic font style
         termcolor.ATTRIBUTES['itallic'] = 3
@@ -89,7 +93,27 @@ class Config(object):
               )
 
 
-    def get_color(self, key, default):
+    def get_bool(self, key, default=None):
+        '''Get int key value or default if absent.
+            Throw ValueError if not an integer.
+        '''
+        assert(isinstance(key, str))
+        assert(isinstance(default, bool) or default is None)
+
+        if key in self.data:
+            value = self.data[key]
+            if value == 'true' or value == '1':
+                return True
+            if value == 'false' or value == '0':
+                return False
+            raise ValueError(
+                'Invalid value of key `{}`: expected boolean, got "{}" [{}]'.
+                format(key, value, self.filename)
+              )
+        return default
+
+
+    def get_color(self, key, default, with_reset=True):
         '''Get color key value or default if absent.
             Throw ValueError if not an integer.
         '''
@@ -103,7 +127,7 @@ class Config(object):
         if 'none' in colors:
             return result
 
-        need_reset = True
+        need_reset = with_reset
         for c in colors:
             if c == 'reset':
                 result += ';0'
@@ -154,7 +178,8 @@ class Config(object):
                         'Invalid value of key `{}`: expected color specification "{}" [{}]'.
                         format(key, c, self.filename)
                       )
-        return '\x1b[' + ('0' if need_reset else '') + result + 'm'
+        assert(result[0] == ';')
+        return '\x1b[' + ('0' + result if need_reset else result[1:]) + 'm'
 
 
     def _validate_rgb_component(self, c):

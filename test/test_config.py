@@ -51,9 +51,24 @@ class ConfigTester(unittest.TestCase):
     def test_get_color_value(self):
         cfg = outproc.Config(self.data_file('sample.conf'))
         self.assertEqual(cfg.get_color('red', 'red'), '\x1b[0;31m')
+        self.assertEqual(cfg.get_color('red', 'red', with_reset=False), '\x1b[31m')
         self.assertEqual(cfg.get_color('error', 'normal'), '\x1b[0;31;1m')
+        self.assertEqual(cfg.get_color('error', 'normal',with_reset=False), '\x1b[31;1m')
         self.assertEqual(cfg.get_color('not-existed', 'normal'), '\x1b[0;38m')
         self.assertEqual(cfg.get_color('some-int', 'reset'), '\x1b[0;38;5;123m')
         self.assertEqual(cfg.get_color('none', 'none'), '')
         with self.assertRaises(TypeError):
             cfg.get_color('red')
+
+
+    def test_get_bool_value(self):
+        cfg = outproc.Config(self.data_file('sample.conf'))
+        self.assertEqual(cfg.get_bool('not-existed'), None)
+        self.assertEqual(cfg.get_bool('not-existed', True), True)
+        self.assertEqual(cfg.get_bool('not-existed', False), False)
+        self.assertEqual(cfg.get_bool('true-bool-key-1'), True)
+        self.assertEqual(cfg.get_bool('false-bool-key-1'), False)
+        self.assertEqual(cfg.get_bool('true-bool-key-2'), True)
+        self.assertEqual(cfg.get_bool('false-bool-key-2'), False)
+        with self.assertRaises(ValueError):
+            cfg.get_bool('some-int')

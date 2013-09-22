@@ -40,7 +40,7 @@ class Processor(outproc.Processor):
 
 
     def _colorize(self, color, line):
-        return color + line + self.config.reset_color
+        return color + line + self.config.color.reset
 
 
     def handle_line(self, line):

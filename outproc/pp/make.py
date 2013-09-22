@@ -55,7 +55,7 @@ class Processor(outproc.Processor):
 
 
     def _colorize_with_misc(self, line):
-        return self.misc + line + self.config.reset_color
+        return self.misc + line + self.config.color.reset
 
 
     def _is_look_like_cmake_compile(self, line):
@@ -123,8 +123,8 @@ class Processor(outproc.Processor):
         pos = line.find(option, last_find_idx)
         assert(pos != -1)
         # Colorise it
-        line = line[:pos] + color + line[pos:pos+len(option)] + self.config.reset_color + line[pos+len(option):]
-        last_find_idx = pos + len(color) + len(self.config.reset_color)
+        line = line[:pos] + color + line[pos:pos+len(option)] + self.config.color.reset + line[pos+len(option):]
+        last_find_idx = pos + len(color) + len(self.config.color.reset)
         return (line, last_find_idx)
 
 
@@ -143,7 +143,7 @@ class Processor(outproc.Processor):
                     assert(close_pos != -1)
                     close_pos += 1
                     line = line[:pos] + self.misc_path + line[pos:close_pos] + self.misc + line[close_pos:]
-            line += self.config.reset_color
+            line += self.config.color.reset
         # Lines started w/ '/usr/bin/make' paint w/ `misc' color
         elif line.startswith(self.binary):
             return self._colorize_with_misc(line)

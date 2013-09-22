@@ -38,11 +38,6 @@ except ImportError:
     log = FakeLogger()
 
 
-def move_to_col(col):
-    assert(isinstance(col, int) and col < os.terminal_size.columns)
-    return '\1b[{}G'.format(col)
-
-
 class Processor(object):
 
     def __init__(self, config, binary):

@@ -27,50 +27,55 @@ class SimpleCppLexer(object):
     ''' Helper class to get C++ lexems to be highlighted'''
 
     _IDENTIFIER_RE = re.compile('[A-Za-z_][A-Za-z_0-9]*')
-    _NUMBER_RE = re.compile('^(\d+(\.\d*)?f?)$')
+    # TODO A real expression to match numbers is much more complicated!
+    # (and not so naive/stupid) Do we really need it? This one covers
+    # most seen cases...
+    _NUMBER_RE = re.compile('^(\d+(\.\d*)?(f|[uU]?[lL]{0,2})?)$')
+
     _KEYWORDS = [
-        'struct'
-      , 'class'
-      , 'enum'
-      , 'union'
-      , 'typedef'
-      , 'using'
-      , 'typename'
-      , 'namespace'
-      , 'template'
-      , 'if'
-      , 'else'
-      , 'do'
-      , 'while'
-      , 'switch'
-      , 'case'
-      , 'for'
-      , 'inline'
-      , 'register'
+        'alignof'
       , 'auto'
-      , 'throw'
-      , 'try'
+      , 'case'
       , 'catch'
-      , 'noexcept'
-      , 'friend'
-      , 'virtual'
-      , 'override'
-      , 'final'
-      , 'public'
-      , 'protected'
-      , 'private'
-      , 'sizeof'
-      , 'alignof'
-      , 'decltype'
-      , 'return'
-      , 'operator'
-      , 'true'
-      , 'false'
-      , 'this'
-      , 'static_cast'
+      , 'class'
       , 'const_cast'
+      , 'constexpr'
+      , 'decltype'
+      , 'do'
       , 'dynamic_cast'
+      , 'else'
+      , 'enum'
+      , 'false'
+      , 'final'
+      , 'for'
+      , 'friend'
+      , 'if'
+      , 'inline'
+      , 'namespace'
+      , 'noexcept'
+      , 'operator'
+      , 'override'
+      , 'private'
+      , 'protected'
+      , 'public'
+      , 'register'
       , 'reinterpret_cast'
+      , 'return'
+      , 'sizeof'
+      , 'static_cast'
+      , 'struct'
+      , 'switch'
+      , 'template'
+      , 'this'
+      , 'throw'
+      , 'true'
+      , 'try'
+      , 'typedef'
+      , 'typename'
+      , 'union'
+      , 'using'
+      , 'virtual'
+      , 'while'
       ]
 
     _MODIFIERS = [
@@ -105,6 +110,7 @@ class SimpleCppLexer(object):
         PREPROCESSOR = 4
         STRING_LITERAL = 5
         NUMERIC_LITERAL = 6
+        COMMENT = 7
         UNCATEGORIZED = -1
 
         __KIND_STRINGS = {
@@ -115,6 +121,7 @@ class SimpleCppLexer(object):
           , PREPROCESSOR: '#'
           , STRING_LITERAL: 'ST'
           , NUMERIC_LITERAL: 'NUM'
+          , COMMENT: 'CMNT'
           , UNCATEGORIZED: 'UC'
           }
 
@@ -220,10 +227,16 @@ class SnippetSanitizer(object):
         return snippet
 
 
+    def _template_decl_fixer_1(snippet):
+        # TODO How to replace `class' w/ `typename'? All occurrences ...
+        return snippet.replace('template<class ', 'template <class ')
+
+
     _SANITIZERS = [
         _boost_variant_details_cleaner
       , _generated_template_params_cleaner
       , _generated_template_params_inst_cleaner
+      , _template_decl_fixer_1
       ]
 
 

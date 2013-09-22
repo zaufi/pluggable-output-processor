@@ -4,9 +4,7 @@
 #
 
 # Standard imports
-import os
 import sys
-import termcolor
 import unittest
 
 sys.path.insert(0, '..')
@@ -62,10 +60,3 @@ class ComplierCmdLineMatchTester(unittest.TestCase):
         self.assertTrue(match)
         self.assertEqual(match.start(), 22)
         self.assertEqual(match.end(), 67)
-
-
-    ##def test_location_matcher(self):
-        ##
-        ##match = _LOCATION_RE.search(line)
-        ##self.assertTrue(match)
-        ###self.assertEqual(match.groups(), 4)
