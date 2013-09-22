@@ -29,7 +29,7 @@ distutils.core.setup(
   , url              = 'https://github.com/zaufi/pluggable-output-processor'
   , packages         = ['outproc', 'outproc.pp']
   , scripts          = ['bin/outproc']
-  , data_files       = [('etc/outproc', ['conf/cmake.conf', 'conf/gcc.conf', 'conf/make.conf'])]
+  , data_files       = [('/etc/outproc', ['conf/cmake.conf', 'conf/gcc.conf', 'conf/make.conf'])]
   , license          = 'GPL-3'
   , classifiers      = [
         'Development Status :: 4 - Beta'
