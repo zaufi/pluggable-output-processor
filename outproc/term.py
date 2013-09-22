@@ -24,8 +24,18 @@ import re
 _FG_COLOR_IN_ESC_SEQ_RE = re.compile('([^\d])3(\d)')
 
 
+def move_above(lines):
+    assert(isinstance(lines, int))
+    return '\x1b[{}A'.format(lines)
+
+
+def move_below(lines):
+    assert(isinstance(lines, int))
+    return '\x1b[{}B'.format(lines)
+
+
 def move_to_col(col):
-    assert(isinstance(col, int) and col < os.terminal_size.columns)
+    assert(isinstance(col, int) and col < os.get_terminal_size().columns)
     return '\1b[{}G'.format(col)
 
 
@@ -67,3 +77,4 @@ def fg2bg(color):
     if match:
         color = color[:match.start() + 1] + '4' + color[match.start() + 2:]
     return color
+

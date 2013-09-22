@@ -21,6 +21,7 @@
 
 import os
 import outproc
+import outproc.term
 import re
 import shlex
 
@@ -37,6 +38,7 @@ class Processor(outproc.Processor):
         self.success = config.get_color('success-test', 'green+bold')
         self.failure = config.get_color('fail-test', 'red+bold')
         self.fatal = config.get_color('fatal-error', 'red+bold')
+        self.prev_line = None
 
 
     def _colorize(self, color, line):
@@ -44,10 +46,17 @@ class Processor(outproc.Processor):
 
 
     def handle_line(self, line):
+        move_code = ''
+        if self.prev_line is not None and line.startswith(self.prev_line):
+            # The line above is a begining of some test and here (in the `line`) a result of it
+            # Move cursor to one line up and override it!
+            lines = int(len(self.prev_line) / os.get_terminal_size().columns)
+            move_code = outproc.term.move_above(lines + 1)
+        self.prev_line = line
         if _SUCCESS_RE.match(line) or _SUCCESS2_RE.match(line):
-            return self._colorize(self.success, line)
+            return self._colorize(move_code + self.success, line)
         if _FAILURE_RE.match(line):
-            return self._colorize(self.failure, line)
+            return self._colorize(move_code + self.failure, line)
         if _FATAL_RE.match(line):
-            return self._colorize(self.fatal, line)
+            return self._colorize(move_code + self.fatal, line)
         return line
