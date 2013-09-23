@@ -31,7 +31,6 @@ distutils.core.setup(
   , scripts          = ['bin/outproc']
   , data_files       = [
         ('/etc/outproc', ['conf/cmake.conf', 'conf/gcc.conf', 'conf/make.conf'])
-      , ('share/doc/outproc-0.1', ['README.md', 'LICENSE'])
       ]
   , license          = 'GPL-3'
   , classifiers      = [
