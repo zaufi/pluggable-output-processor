@@ -216,7 +216,7 @@ do_disable() {
     for module in $@; do
         is_number "${module}" && module=${modules[module-1]}
         [[ -z ${module} ]] && die "Module '${module}' doesn't appear to be valid!"
-        local -r module_file="${where}/${module}"
+        local module_file="${where}/${module}"
         if [[ ! -e "${module_file}" ]]; then
             write_error_msg "${module} is not installed"
             continue

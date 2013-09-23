@@ -41,9 +41,10 @@ Easy!
     $ cd outproc-X.Y
     $ sudo easy_install .
 
-For Gentoo users there is a live ebuild in my repository. Also (for Gentoo users again ;-) eselect 
-module from `contrib/` will be installed by the ebuild. Users of other distros have to make a symlinks 
-to required modules manually:
+For Gentoo users there is a [live ebuild](https://github.com/zaufi/zaufi-overlay/blob/master/dev-util/pluggable-output-processor/pluggable-output-processor-scm.ebuild)
+in my [repository](https://github.com/zaufi/zaufi-overlay/). Also (for Gentoo users again ;-)
+`eselect` module from `contrib/` will be installed by the ebuild. Users of other distros have to
+make a symlinks to required modules manually:
 
     $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/<module-name>
 
