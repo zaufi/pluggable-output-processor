@@ -22,12 +22,33 @@ Features
 --------
 
 * easy (to Python programmers ;-) to extend
-* 256 color terminal support ;-) configuration files in addition to standard named colors 
+* 256 color terminal support ;-) configuration files in addition to standard named colors
   may contain color definitions as `rgb(r,g,b)` or `gray(n)`
-* colorizers for `make`, `cmake`, `gcc` out of the box
-* `gcc` module actually is not a stupid colorizer (like others ;-)
+* colorizers for `make`, `cmake`, `gcc` out of the box (more to come ;-)
+* some modules are not just a stupid colorizers ;-) For example `gcc` can reformat text for
+  better readability (really helps to understand template errors). Also `cmake` module can reduce
+  amount of lines printed during test by collapsing test _intro_ message and _result_ into a single one.
 
 // TBD
+
+
+Installation
+------------
+
+Easy!
+
+    $ tar -xzf outproc-X.Y.tar.gz
+    $ cd outproc-X.Y
+    $ sudo easy_install .
+
+For Gentoo users there is a live ebuild in my repository. Also (for Gentoo users again ;-) eselect 
+module from `contrib/` will be installed by the ebuild. Users of other distros have to make a symlinks 
+to required modules manually:
+
+    $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/<module-name>
+
+and then make sure `/usr/lib/outproc/bin` placed __before__ `/usr/bin` (and anything else) in your 
+user/system `PATH` environment.
 
 
 TODO
