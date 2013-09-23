@@ -1,0 +1,235 @@
+# -*-eselect-*-
+#
+# eselect module to manage `outproc` plugins
+#
+# Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
+#
+# Pluggable Output Processor is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Pluggable Output Processor is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DESCRIPTION="Manage plugins for Pluggable Output Processor"
+MAINTAINER="Alex Turbov <i.zaufi@gmail.com>"
+VERSION="0.1"
+
+### Helper functions ###
+
+_get_outproc_modules_dir() {
+    local -r _gomd__site=$(python -c 'import site; print(site.getsitepackages()[0])')/outproc/pp
+    if [[ -d ${_gomd__site} ]]; then
+        echo -n "${_gomd__site}"
+    else
+        die -q "Modules dir '${_gomd__site}' doesn't exist"
+    fi
+}
+
+_list_outproc_modules() {
+    local -r _lom__where=$(_get_outproc_modules_dir)
+    local -a _lom__modules
+    local _lom__module
+    for _lom__module in ${_lom__where}/*; do
+        if [[ -f ${_lom__module} ]]; then
+            local _lom__name=$(basename ${_lom__module} '.py')
+            if [[ "${_lom__name}.py" == "$(basename ${_lom__module})" ]]; then
+                case ${_lom__name} in
+                c++|cc|g++|__init__)
+                    # Ignore service modules and symlinked `gcc` duplicates
+                    ;;
+                *)
+                    _lom__modules+=( ${_lom__name} )
+                    ;;
+                esac
+            fi
+        fi
+    done
+    local -r _lom__result_var=${1}
+    eval "${_lom__result_var}=( ${_lom__modules[@]} )"
+}
+
+_try_remove() {
+    local -r _tr__module_file=${1}
+    if [[ -w $(dirname "${_tr__modulefile}") ]]; then
+        rm "${_tr__module_file}" || die -q "Failed to remove ${_tr__module_file}"
+    else
+        die -q "You don't have permission to remove ${_tr__module_file}"
+    fi
+}
+
+_try_symlink() {
+    local -r _ts__dst=${1}
+    local _ts_what=$(which --skip-alias --skip-functions outproc)
+    local _ts_rel=$(relative_name ${_ts_what} $(dirname ${_ts__dst}))
+    local _ts_outproc_bin=$(dirname ${_ts_rel})/outproc
+    if [[ -w $(dirname "${_tr__dst}") ]]; then
+        ln -s "${_ts_outproc_bin}" "${_ts__dst}" \
+          || die -q "Failed to make a symbolic link ${_ts_src} -> ${_ts__dst}"
+    else
+        die -q "You don't have permission to write to $(dirname ${_ts__dst})"
+    fi
+}
+
+### show action ###
+
+describe_show() {
+    echo "Show current plugins enabled"
+}
+describe_show_options() {
+    echo "--user : Show user enabled plugins (if ommited, system-wide will be shown)"
+}
+
+do_show() {
+    local where=${ROOT%/}/usr/lib/outproc/bin
+    local where_description='system-wide'
+    if [[ "$1" == "--user" ]]; then
+        where=${ROOT%/}/${HOME}/bin
+        where_description='user'
+    fi
+
+    [[ ! -d ${where} ]] && die -e "No such directory: ${where}"
+
+    local -a targets
+    local module
+    for module in ${where}/*; do
+        if [[ -L ${module} ]]; then
+            local name=$(basename ${module})
+            case ${name} in
+            c++|cc|g++)
+                # c++/cc/gcc is the same module -- gcc
+                ;;
+            *)
+                targets+=( ${name} )
+                ;;
+            esac
+        fi
+    done
+    write_list_start "Installed modules (${where_description})"
+    write_numbered_list -m "(none found)" "${targets[@]}"
+}
+
+### list action ###
+
+describe_list() {
+    echo "List plugins available"
+}
+
+do_list() {
+    local -a modules
+    _list_outproc_modules modules
+    write_list_start "Available modules"
+    write_numbered_list -m "(none found)" "${modules[@]}"
+}
+
+### enable action ###
+
+describe_enable() {
+    echo "Enable specified plugin(s)"
+}
+
+describe_enable_parameters() {
+    echo "<module>"
+}
+
+describe_enable_options() {
+    echo "--user : Enable module at user level instead of system-wide"
+    echo "<module> : Module name or number (from 'list' action)"
+}
+
+do_enable() {
+    local -r modules_dir=$(_get_outproc_modules_dir)
+    local -r what=$(which --skip-alias --skip-functions outproc 2>/dev/null)
+    [[ -z "${what}" ]] && die -q 'outproc executable not found'
+    local where=${ROOT%/}/usr/lib/outproc/bin
+    if [[ "$1" == "--user" ]]; then
+        where=${ROOT%/}/${HOME}/bin
+        shift
+    fi
+
+    [[ $# -eq 0 ]] && die -q "You didn't specify any module to enable"
+    [[ ! -d ${where} ]] && die -e "No such directory: ${where}"
+    [[ -w ${where} ]] || die -q "You don't have permission to write to ${where}"
+
+    local -a modules
+    _list_outproc_modules modules
+
+    for module in $@; do
+        is_number "${module}" && module=${modules[module-1]}
+        [[ -z ${module} ]] && die "Module '${module}' doesn't appear to be valid!"
+        local -r module_file="${modules_dir}/${module}.py"
+        if [[ ! -e "${module_file}" ]]; then
+            write_error_msg "Module '${module}' doesn't exist"
+            continue
+        fi
+        # Already installed
+        if [[ -L ${where}/${module} ]]; then
+            write_error_msg "Module '${module}' already installed"
+            continue
+        fi
+        # Symlink selected module
+        _try_symlink ${where}/${module}
+        # For 'gcc' module we have to remove few more symliks
+        if [[ "${module}" == 'gcc' ]]; then
+            _try_symlink ${where}/c++
+            _try_symlink ${where}/g++
+            _try_symlink ${where}/cc
+        fi
+    done
+}
+
+### disable action ###
+
+describe_disable() {
+    echo "Disable specified plugin(s)"
+}
+
+describe_disable_parameters() {
+    echo "<module>"
+}
+
+describe_disable_options() {
+    echo "--user : Disable user level plugin(s)"
+    echo "<module> : Module name or number (from 'list' action)"
+}
+
+do_disable() {
+    local where=${ROOT%/}/usr/lib/outproc/bin
+    if [[ "$1" == "--user" ]]; then
+        where=${ROOT%/}/${HOME}/bin
+        shift
+    fi
+
+    [[ ! -d ${where} ]] && die -e "No such directory: ${where}"
+    [[ $# -eq 0 ]] && die -q "You didn't specify any module to disable"
+
+    local -a modules
+    _list_outproc_modules modules
+
+    for module in $@; do
+        is_number "${module}" && module=${modules[module-1]}
+        [[ -z ${module} ]] && die "Module '${module}' doesn't appear to be valid!"
+        local -r module_file="${where}/${module}"
+        if [[ ! -e "${module_file}" ]]; then
+            write_error_msg "${module} is not installed"
+            continue
+        fi
+        # Remove selected module
+        _try_remove ${module_file}
+        # For 'gcc' module we have to remove few more symliks
+        if [[ "${module}" == 'gcc' ]]; then
+            _try_remove ${where}/c++
+            _try_remove ${where}/cc
+            _try_remove ${where}/g++
+        fi
+    done
+}
+
+# kate: hl bash;
