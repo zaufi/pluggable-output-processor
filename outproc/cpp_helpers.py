@@ -31,6 +31,7 @@ class SimpleCppLexer(object):
     # (and not so naive/stupid) Do we really need it? This one covers
     # most seen cases...
     _NUMBER_RE = re.compile('^(\d+(\.\d*)?(f|[uU]?[lL]{0,2})?)$')
+    _STRING_RE = re.compile('(.*?)(("[^"]*)("(.*))?)')
 
     _KEYWORDS = [
         'alignof'
@@ -102,6 +103,8 @@ class SimpleCppLexer(object):
       , 'void'
       ]
 
+    _STRING_PREFIXES = ['u', 'U', 'L', 'u8', 'R', 'uR', 'UR', 'u8R', 'LR']
+
     class Token:
         BUILTIN_TYPE = 0
         IDENTIFIER = 1
@@ -143,9 +146,24 @@ class SimpleCppLexer(object):
             return tokens
 
         merge_identifier = False
+        in_string = False
         for tok in re.split('(\W+)', snippet):              # Split the whole snippet by elementary tokens
+            #print('tok={}'.format(repr(tok)))
             if not tok:                                     # Last item can be empty
                 continue                                    # Just skip it!
+            elif in_string:
+                quot_pos = tok.find('"')
+                assert(tokens[-1].kind == SimpleCppLexer.Token.STRING_LITERAL)
+                if quot_pos != -1:
+                    if quot_pos == 0:
+                        tokens[-1].token += '"'
+                        tokens.append(SimpleCppLexer.Token(tok[1:], SimpleCppLexer.Token.UNCATEGORIZED))
+                    else:
+                        tokens[-1].token += tok[:quot_pos]
+                        tokens.append(SimpleCppLexer.Token(tok[quot_pos:], SimpleCppLexer.Token.UNCATEGORIZED))
+                    in_string = False
+                else:
+                    tokens[-1].token += tok
             elif tok in SimpleCppLexer._KEYWORDS:
                 tokens.append(SimpleCppLexer.Token(tok, SimpleCppLexer.Token.KEYWORD))
             elif tok in SimpleCppLexer._MODIFIERS:
@@ -153,8 +171,31 @@ class SimpleCppLexer(object):
             elif tok in SimpleCppLexer._DATA_TYPES:
                 tokens.append(SimpleCppLexer.Token(tok, SimpleCppLexer.Token.BUILTIN_TYPE))
             elif tok == '::' and tokens and tokens[-1].kind == SimpleCppLexer.Token.IDENTIFIER:
-                tokens[-1].token = tokens[-1].token + tok
+                tokens[-1].token += tok
                 merge_identifier = True
+            elif SimpleCppLexer._STRING_RE.match(tok):
+                match = SimpleCppLexer._STRING_RE.search(tok)
+                assert(match)
+                left_part = match.group(1)
+                if left_part:                               # Text before '"' char
+                    tokens.append(SimpleCppLexer.Token(left_part, SimpleCppLexer.Token.UNCATEGORIZED))
+                string_start = match.group(3)               # Text right after open '"' char
+                assert(string_start)                        # It must be here anyway!
+                transform_prev = tokens \
+                  and tokens[-1].kind == SimpleCppLexer.Token.IDENTIFIER \
+                  and tokens[-1].token in SimpleCppLexer._STRING_PREFIXES
+                if transform_prev:
+                    tokens[-1].kind = SimpleCppLexer.Token.STRING_LITERAL
+                    tokens[-1].token += string_start
+                else:
+                    tokens.append(SimpleCppLexer.Token(string_start, SimpleCppLexer.Token.STRING_LITERAL))
+                right_part = match.group(4)                 # Closing '"' may be here as well
+                if right_part:
+                    assert(right_part[0] == '"')
+                    tokens[-1].token += '"'
+                    if 1 < len(right_part):
+                        tokens.append(SimpleCppLexer.Token(right_part[1:], SimpleCppLexer.Token.UNCATEGORIZED))
+                in_string = True
             elif SimpleCppLexer._NUMBER_RE.match(tok):
                 tokens.append(SimpleCppLexer.Token(tok, SimpleCppLexer.Token.NUMERIC_LITERAL))
             elif SimpleCppLexer._IDENTIFIER_RE.match(tok):

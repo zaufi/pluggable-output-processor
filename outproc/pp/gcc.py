@@ -54,6 +54,7 @@ class Processor(outproc.Processor):
         self.code_data_member = config.get_color('code-data-member', 'normal')
         self.code_preprocessor = config.get_color('code-preprocessor', 'green')
         self.code_number = config.get_color('code-numeric-literal', 'blue+bold')
+        self.code_string = config.get_color('code-string-literal', 'magenta')
         self.code_cursor = outproc.term.fg2bg(config.get_color('code-cursor', 'red', with_reset=False))
         self.nl = config.get_bool('new-line-after-code', True)
 
@@ -102,6 +103,8 @@ class Processor(outproc.Processor):
                 tokens[i].token = self._colorize_token(tok, self.code_preprocessor)
             elif tok.kind == SimpleCppLexer.Token.NUMERIC_LITERAL:
                 tokens[i].token = self._colorize_token(tok, self.code_number)
+            elif tok.kind == SimpleCppLexer.Token.STRING_LITERAL:
+                tokens[i].token = self._colorize_token(tok, self.code_string)
             elif tok.kind == SimpleCppLexer.Token.IDENTIFIER:
                 if tok.token.startswith('boost::'):
                     tokens[i].token = self._colorize_token(tok, self.code_boost_ns)
