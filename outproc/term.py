@@ -36,7 +36,7 @@ def move_below(lines):
 
 def move_to_col(col):
     assert(isinstance(col, int) and col < os.get_terminal_size().columns)
-    return '\1b[{}G'.format(col)
+    return '\x1b[{}G'.format(col)
 
 
 def pos_to_offset(line, requested_pos):
@@ -63,6 +63,7 @@ def pos_to_offset(line, requested_pos):
             if current_pos == requested_pos:
                 return i
             current_pos += 1
+    assert(not 'Smth wrong w/ input sequence!')
 
 
 def fg2bg(color):

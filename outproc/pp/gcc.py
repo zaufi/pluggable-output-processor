@@ -30,10 +30,8 @@ from outproc.cpp_helpers import SimpleCppLexer, SnippetSanitizer
 _LOCATION_RE = re.compile('([^ :]+?):([0-9]+(,|:[0-9]+[:,]?)?)?')
 # /tmp/ccUlKMZA.o:zz.cc:function main: error: undefined reference to 'boost::iostreams::zlib::default_strategy'
 _LINK_ERROR_RE = re.compile(':function (.*): error: ')
-_QUOTED_CODE_RE = re.compile("('.*?')")
 _SKIPPING_WARN = re.compile('\[ skipping [0-9]+ instantiation contexts[^\]]+\]')
 _WITH_LIST_RE = re.compile(' \[with (.*)\]')
-_NOTE_WITH_CODE_SNIPPET_RE = re.compile(' note: \w[^\']*$')
 
 
 class Processor(outproc.Processor):
@@ -181,11 +179,11 @@ class Processor(outproc.Processor):
 
 
     def _handle_notice_with_code(self, line, code_start_pos):
-        line = self._try_colorize_location(line, self.notice)
-        return line[:code_start_pos] \
+        line = line[:code_start_pos] \
           + self.code \
           + self._handle_code_snippet(line[code_start_pos:], True) \
           + self.config.color.reset
+        return self._try_colorize_location(line, self.notice)
 
 
     def handle_line(self, line):
@@ -210,27 +208,40 @@ class Processor(outproc.Processor):
         if match:
             return self._handle_warning(line, match.start())
 
-        # There is possible to types of 'note:' messages
-        # 0) exactly one space after and code snippet
-        # 1) more than one space and message (like 'candidate')
-        # UPD:
-        # 2) 'note:' w/ some text after one space and single quoted C++ code
-        match = _NOTE_WITH_CODE_SNIPPET_RE.search(line)
-        if match:
-            return self._handle_notice_with_code(line, match.end())
-
         is_look_like_notice = line.find(' In instantiation of') != -1 \
           or line.find(' In function') != -1                          \
           or line.find(' In member function') != -1                   \
+          or line.find(' In static member function ') != -1           \
+          or line.find(' In substitution of ') != -1                  \
           or line.find('In file included from ') != -1                \
           or line.find('                 from ') != -1                \
           or line.find('   required from ') != -1                     \
           or line.find('   recursively required from ') != -1         \
           or line.find('   required by substitution of ') != -1       \
-          or line.find(' note: ') != -1
+          or line.find('At global scope:') != -1
         if is_look_like_notice:
             return self._handle_notice(line)
 
+        # There are possible a bunch of messages started w/ 'note:'
+        # some of them contains just an informational text, the others
+        # may contain code (in single quotes) mixed w/ text, or just pure code line...
+        # I see no other reliable way to recognize code (when it is not in a quotes)
+        # than this:
+        note_index = line.find(' note: ')
+        if note_index != -1:
+            is_look_like_notice = line.endswith('suggested alternatives:')               \
+              or line.endswith('suggested alternative:')                                 \
+              or line.endswith('candidate is:')                                          \
+              or line.endswith('invalid template non-type parameter')                    \
+              or line.endswith('template argument deduction/substitution failed:')
+            if is_look_like_notice:
+                return self._handle_notice(line)
+            cnt = line.count("'")
+            if not cnt or cnt % 2:
+                return self._handle_notice_with_code(line, note_index + len(' note: '))
+            return self._handle_notice(line)
+
+        # All standalong code snippets (AFAIK) starts w/ at least one space...
         if line.strip() != '^' and line[0] == ' ':
             assert(self.prev_line is None)
             self.prev_line = line
@@ -238,13 +249,13 @@ class Processor(outproc.Processor):
 
         if line.strip() == '^':
             assert(self.prev_line is not None)
-            pos = len(line)
+            pos = len(line) - 1
             line = self.code + self._handle_code_snippet(self.prev_line, True) + self.config.color.reset
 
             # Find a cursor position for a transformed line
             pos = outproc.term.pos_to_offset(line, pos)
-            line = line[:pos-1] + self.code_cursor + line[pos-1:pos] + self.config.color.normal_bg \
-              + line[pos:] + ('\n' if self.nl else '')
+            line = line[:pos] + self.code_cursor + line[pos:pos+1] + self.config.color.normal_bg \
+              + line[pos+1:] + ('\n' if self.nl else '')
             self.prev_line = None
 
         # Return unmodified line
