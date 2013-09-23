@@ -164,7 +164,7 @@ do_enable() {
     for module in $@; do
         is_number "${module}" && module=${modules[module-1]}
         [[ -z ${module} ]] && die "Module '${module}' doesn't appear to be valid!"
-        local -r module_file="${modules_dir}/${module}.py"
+        local module_file="${modules_dir}/${module}.py"
         if [[ ! -e "${module_file}" ]]; then
             write_error_msg "Module '${module}' doesn't exist"
             continue
