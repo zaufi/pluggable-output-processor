@@ -1,21 +1,8 @@
 What is This?
 =============
 
-Motivation
-----------
-
-_Pluggable Output Processor_ is my attempt to get rid of a bunch of various colorizers
-from my system (like `colorgcc`, `colordiff`, `colorsvn`, ...) <del>and take everything under control</del>.
-Some of them are written on Perl (and I'm not a fun of it :-) and after few hacks I've made to improve
-`colorgcc`, I realized that I don't want to <del>waste my time</del> learn Perl.
-
-
-Yes, I know there is a lot stuff like this, but I'm not a Perl programmer to improve them...
-but have a lot of thoughts/ideas how to do that. The others are <del>too much</del>  _end-user oriented_ 
-<del>so inflexible</del> -- they can colorize almost everything via configuration files and regular expressions. 
-The only problem I have w/ them:
-some of what I'd like to colorize is **damn hard to express via regexes** ... particularly because
-line-by-line processing implemented in that tools have no _state_...
+_Pluggable Output Processor_ is an engine to wrap any executabe and capture its output through
+a pluggable module to colorize it and/or (re)format.
 
 
 Features
@@ -28,8 +15,6 @@ Features
 * some modules are not just a stupid colorizers ;-) For example `gcc` can reformat text for
   better readability (really helps to understand template errors). Also `cmake` module can reduce
   amount of lines printed during test by collapsing test _intro_ message and _result_ into a single one.
-
-// TBD
 
 
 Installation
