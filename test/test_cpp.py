@@ -69,15 +69,70 @@ class SimpleCppLexerTester(unittest.TestCase):
     def test_5(self):
         line = 'LOG4CXX_DEBUG(m_logger, task_it->m_dl_queue.size() << u8" pages queued");'
         tokens = SimpleCppLexer.tokenize_string(line)
-        print(tokens)
+        #print(tokens)
         self.assertEqual(len(tokens), 12)
         stmt = SimpleCppLexer.assemble_statement(tokens)
         self.assertEqual(stmt, line)
 
-    def test_5(self):
+    def test_6(self):
         line = 'LOG4CXX_DEBUG(m_logger, u8R" -> ");'
         tokens = SimpleCppLexer.tokenize_string(line)
-        print(tokens)
+        #print(tokens)
         self.assertEqual(len(tokens), 6)
         stmt = SimpleCppLexer.assemble_statement(tokens)
         self.assertEqual(stmt, line)
+
+
+    def test_7(self):
+        line = 'std::cout << "deduced type: " << type_name(k) << std::endl;'
+        tokens = SimpleCppLexer.tokenize_string(line)
+        #print(tokens)
+        self.assertEqual(len(tokens), 10)
+        stmt = SimpleCppLexer.assemble_statement(tokens)
+        self.assertEqual(stmt, line)
+
+
+    def test_8(self):
+        line = 'http::connector m_connector;  // Connector instance to establish new HTTP connections'
+        tokens = SimpleCppLexer.tokenize_string(line)
+        #print(tokens)
+        self.assertEqual(len(tokens), 5)
+        stmt = SimpleCppLexer.assemble_statement(tokens)
+        self.assertEqual(stmt, line)
+
+
+    def test_9(self):
+        line = 'http::connector m_connector;  ///< Connector instance to establish new HTTP connections'
+        tokens = SimpleCppLexer.tokenize_string(line)
+        #print(tokens)
+        self.assertEqual(len(tokens), 5)
+        stmt = SimpleCppLexer.assemble_statement(tokens)
+        self.assertEqual(stmt, line)
+
+
+    def test_10(self):
+        line = 'void foo(int /*unused*/);'
+        tokens = SimpleCppLexer.tokenize_string(line)
+        #print(tokens)
+        self.assertEqual(len(tokens), 8)
+        stmt = SimpleCppLexer.assemble_statement(tokens)
+        self.assertEqual(stmt, line)
+
+
+    def test_11(self):
+        line = 'void foo(int /**** /unused/ ****/);'
+        tokens = SimpleCppLexer.tokenize_string(line)
+        #print(tokens)
+        self.assertEqual(len(tokens), 8)
+        stmt = SimpleCppLexer.assemble_statement(tokens)
+        self.assertEqual(stmt, line)
+
+
+    def test_12(self):
+        line = 'void foo(int /**** <<->> ****/);'
+        tokens = SimpleCppLexer.tokenize_string(line)
+        #print(tokens)
+        self.assertEqual(len(tokens), 8)
+        stmt = SimpleCppLexer.assemble_statement(tokens)
+        self.assertEqual(stmt, line)
+

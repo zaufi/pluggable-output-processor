@@ -53,6 +53,7 @@ class Processor(outproc.Processor):
         self.code_preprocessor = config.get_color('code-preprocessor', 'green')
         self.code_number = config.get_color('code-numeric-literal', 'blue+bold')
         self.code_string = config.get_color('code-string-literal', 'magenta')
+        self.code_comment = config.get_color('code-comment', 'grey+bold')
         self.code_cursor = outproc.term.fg2bg(config.get_color('code-cursor', 'red', with_reset=False))
         self.nl = config.get_bool('new-line-after-code', True)
 
@@ -103,6 +104,8 @@ class Processor(outproc.Processor):
                 tokens[i].token = self._colorize_token(tok, self.code_number)
             elif tok.kind == SimpleCppLexer.Token.STRING_LITERAL:
                 tokens[i].token = self._colorize_token(tok, self.code_string)
+            elif tok.kind == SimpleCppLexer.Token.COMMENT:
+                tokens[i].token = self._colorize_token(tok, self.code_comment)
             elif tok.kind == SimpleCppLexer.Token.IDENTIFIER:
                 if tok.token.startswith('boost::'):
                     tokens[i].token = self._colorize_token(tok, self.code_boost_ns)
@@ -208,11 +211,14 @@ class Processor(outproc.Processor):
         if match:
             return self._handle_warning(line, match.start())
 
+        # TODO Transform into container of strings and predicate evaluation
         is_look_like_notice = line.find(' In instantiation of') != -1 \
           or line.find(' In function') != -1                          \
           or line.find(' In member function') != -1                   \
           or line.find(' In static member function ') != -1           \
           or line.find(' In substitution of ') != -1                  \
+          or line.find(' In constructor ') != -1                      \
+          or line.find(' In destructor ') != -1                       \
           or line.find('In file included from ') != -1                \
           or line.find('                 from ') != -1                \
           or line.find('   required from ') != -1                     \

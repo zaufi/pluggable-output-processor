@@ -141,6 +141,39 @@ class SimpleCppLexer(object):
 
 
     @staticmethod
+    def _categorize_token(tok, prev_token):
+        #print('tok={}'.format(repr(tok)))
+        token = None
+        replace_prev = False
+        # Handle keywords
+        if tok in SimpleCppLexer._KEYWORDS:
+            token = SimpleCppLexer.Token(tok, SimpleCppLexer.Token.KEYWORD)
+        # Handle type modifiers
+        elif tok in SimpleCppLexer._MODIFIERS:
+            token = SimpleCppLexer.Token(tok, SimpleCppLexer.Token.MODIFIER)
+        # Handle builtin data types
+        elif tok in SimpleCppLexer._DATA_TYPES:
+            token = SimpleCppLexer.Token(tok, SimpleCppLexer.Token.BUILTIN_TYPE)
+        # Join scope access to a previous token if latter is identifier
+        elif tok == '::' and prev_token and prev_token.kind == SimpleCppLexer.Token.IDENTIFIER:
+            token = prev_token
+            token.token += tok
+            replace_prev = True
+        elif SimpleCppLexer._NUMBER_RE.match(tok):
+            token = SimpleCppLexer.Token(tok, SimpleCppLexer.Token.NUMERIC_LITERAL)
+        elif SimpleCppLexer._IDENTIFIER_RE.match(tok):
+            if prev_token and prev_token.kind == SimpleCppLexer.Token.IDENTIFIER:
+                token = prev_token
+                token.token += tok
+                replace_prev = True
+            else:
+                token = SimpleCppLexer.Token(tok, SimpleCppLexer.Token.IDENTIFIER)
+        else:
+            token = SimpleCppLexer.Token(tok, SimpleCppLexer.Token.UNCATEGORIZED)
+        return (token, replace_prev)
+
+
+    @staticmethod
     def tokenize_string(snippet):
         tokens = []
 
@@ -149,67 +182,121 @@ class SimpleCppLexer(object):
             tokens.append(SimpleCppLexer.Token(snippet, SimpleCppLexer.Token.PREPROCESSOR))
             return tokens
 
-        merge_identifier = False
         in_string = False
+        in_block_comment = False
+        in_cpp_comment = False
         for tok in re.split('(\W+)', snippet):              # Split the whole snippet by elementary tokens
-            #print('tok={}'.format(repr(tok)))
             if not tok:                                     # Last item can be empty
                 continue                                    # Just skip it!
-            elif in_string:
-                quot_pos = tok.find('"')
-                assert(tokens[-1].kind == SimpleCppLexer.Token.STRING_LITERAL)
-                if quot_pos != -1:
-                    if quot_pos == 0:
-                        tokens[-1].token += '"'
-                        tokens.append(SimpleCppLexer.Token(tok[1:], SimpleCppLexer.Token.UNCATEGORIZED))
-                    else:
-                        tokens[-1].token += tok[:quot_pos]
-                        tokens.append(SimpleCppLexer.Token(tok[quot_pos:], SimpleCppLexer.Token.UNCATEGORIZED))
-                    in_string = False
-                else:
-                    tokens[-1].token += tok
-            elif tok in SimpleCppLexer._KEYWORDS:
-                tokens.append(SimpleCppLexer.Token(tok, SimpleCppLexer.Token.KEYWORD))
-            elif tok in SimpleCppLexer._MODIFIERS:
-                tokens.append(SimpleCppLexer.Token(tok, SimpleCppLexer.Token.MODIFIER))
-            elif tok in SimpleCppLexer._DATA_TYPES:
-                tokens.append(SimpleCppLexer.Token(tok, SimpleCppLexer.Token.BUILTIN_TYPE))
-            elif tok == '::' and tokens and tokens[-1].kind == SimpleCppLexer.Token.IDENTIFIER:
+
+            # If we r in a C++ style comment...
+            if in_cpp_comment:
+                # Just merge everything till the end to a previous token
+                assert(tokens[-1].kind == SimpleCppLexer.Token.COMMENT)
                 tokens[-1].token += tok
-                merge_identifier = True
-            elif SimpleCppLexer._STRING_RE.match(tok):
-                match = SimpleCppLexer._STRING_RE.search(tok)
-                assert(match)
-                left_part = match.group(1)
-                if left_part:                               # Text before '"' char
-                    tokens.append(SimpleCppLexer.Token(left_part, SimpleCppLexer.Token.UNCATEGORIZED))
-                string_start = match.group(3)               # Text right after open '"' char
-                assert(string_start)                        # It must be here anyway!
-                transform_prev = tokens \
-                  and tokens[-1].kind == SimpleCppLexer.Token.IDENTIFIER \
-                  and tokens[-1].token in SimpleCppLexer._STRING_PREFIXES
-                if transform_prev:
-                    tokens[-1].kind = SimpleCppLexer.Token.STRING_LITERAL
-                    tokens[-1].token += string_start
+                continue
+
+            # Iterate over tokenized string and look for
+            # quotes (string literals) and comments...
+            last_tokenized_pos = 0
+            seen_slash = False
+            seen_star = False
+            want_next = False
+            for pos, c in enumerate(tok):
+                assert(not in_cpp_comment)
+                if in_string:
+                    assert(not seen_slash and not seen_star)
+                    # Ok, we r at string now... Check if current char is a quote symbol
+                    # Check if string ends...
+                    if c == '"':
+                        assert(tokens)
+                        # Join chars before (including a current) to a prev token
+                        tokens[-1].token += tok[last_tokenized_pos:pos+1]
+                        in_string = False                   # Drop the flag!
+                        last_tokenized_pos = pos + 1
+                elif in_block_comment:
+                    if seen_star and c == '/':              # Is end of block comment?
+                        in_block_comment = False            # Drop the flag!
+                        assert(tokens)
+                        tokens[-1].token += tok[last_tokenized_pos:pos+1]
+                        last_tokenized_pos = pos + 1
+                    seen_star = bool(c == '*')
+                # Starting a block or C++ style comment?
+                elif seen_slash and (c == '/' or c == '*'):
+                    if c == '/':
+                        in_cpp_comment = True
+                    else:
+                        in_block_comment = True
+                    # Append anything before it as a separate token
+                    before = None
+                    if 0 < (pos - 1):                       # Is this not a token start?
+                        before = tok[last_tokenized_pos:pos-1]
+                    if before:
+                        token, replace_prev = SimpleCppLexer._categorize_token(
+                            before
+                          , tokens[-1] if tokens else None
+                          )
+                        if replace_prev:
+                            tokens[-1] = token
+                        else:
+                            tokens.append(token)
+                    if in_cpp_comment:
+                        comment_start_text = tok[pos-1:]
+                    else:
+                        comment_start_text = tok[pos-1:pos+1]
+                        last_tokenized_pos = pos+1
+                    tokens.append(SimpleCppLexer.Token(comment_start_text, SimpleCppLexer.Token.COMMENT))
+                    if in_cpp_comment:                      # C++ comments do not require further parsing...
+                        want_next = True                    # Order to go for next token after this loop
+                        break                               # immediately!
+                elif c == '"':
+                    in_string = True
+                    # Append anything before it as a separate token
+                    before = None
+                    if 0 < (pos - 1):                       # Is this not a token start?
+                        before = tok[last_tokenized_pos:pos]
+                    if before:
+                        token, replace_prev = SimpleCppLexer._categorize_token(
+                            before
+                          , tokens[-1] if tokens else None
+                          )
+                        if replace_prev:
+                            tokens[-1] = token
+                        else:
+                            tokens.append(token)
+                    switch_prev_token =  tokens \
+                      and tokens[-1].kind == SimpleCppLexer.Token.IDENTIFIER \
+                      and tokens[-1].token in SimpleCppLexer._STRING_PREFIXES
+                    if switch_prev_token:
+                        tokens[-1].kind = SimpleCppLexer.Token.STRING_LITERAL
+                        tokens[-1].token += c
+                    else:
+                        tokens.append(SimpleCppLexer.Token(c, SimpleCppLexer.Token.STRING_LITERAL))
+                    last_tokenized_pos = pos+1
                 else:
-                    tokens.append(SimpleCppLexer.Token(string_start, SimpleCppLexer.Token.STRING_LITERAL))
-                right_part = match.group(4)                 # Closing '"' may be here as well
-                if right_part:
-                    assert(right_part[0] == '"')
-                    tokens[-1].token += '"'
-                    if 1 < len(right_part):
-                        tokens.append(SimpleCppLexer.Token(right_part[1:], SimpleCppLexer.Token.UNCATEGORIZED))
-                in_string = True
-            elif SimpleCppLexer._NUMBER_RE.match(tok):
-                tokens.append(SimpleCppLexer.Token(tok, SimpleCppLexer.Token.NUMERIC_LITERAL))
-            elif SimpleCppLexer._IDENTIFIER_RE.match(tok):
-                if merge_identifier:
-                    tokens[-1].token = tokens[-1].token + tok
-                    merge_identifier = False
-                else:
-                    tokens.append(SimpleCppLexer.Token(tok, SimpleCppLexer.Token.IDENTIFIER))
+                    seen_slash = bool(c == '/')
+                    seen_star = bool(c == '*')
+
+            # If we are at
+            if want_next:
+                continue
+            assert(not in_cpp_comment)
+            if in_block_comment:
+                assert(tokens and tokens[-1].kind == SimpleCppLexer.Token.COMMENT)
+                tokens[-1].token += tok[last_tokenized_pos:len(tok)]
+            elif in_string:
+                assert(tokens and tokens[-1].kind == SimpleCppLexer.Token.STRING_LITERAL)
+                tokens[-1].token += tok[last_tokenized_pos:len(tok)]
             else:
-                tokens.append(SimpleCppLexer.Token(tok, SimpleCppLexer.Token.UNCATEGORIZED))
+                token, replace_prev = SimpleCppLexer._categorize_token(
+                    tok[last_tokenized_pos:len(tok)]
+                  , tokens[-1] if tokens else None
+                  )
+                if replace_prev:
+                    assert(tokens)
+                    tokens[-1] = token
+                else:
+                    tokens.append(token)
         return tokens
 
     @staticmethod
