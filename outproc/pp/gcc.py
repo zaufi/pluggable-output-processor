@@ -76,7 +76,7 @@ class Processor(outproc.Processor):
         return color + t.token + self.code
 
 
-    def _handle_code_snippet(self, snippet, color_only):
+    def _handle_code_fragment(self, snippet, color_only):
         # Try to sanitize it if possible before colorize!
         if not color_only:
             # Replace default parameters from boost::make_variant_over instantiations
@@ -118,6 +118,31 @@ class Processor(outproc.Processor):
         return snippet
 
 
+    def _handle_code_snippet(self, snippet, current_color, color_only):
+        if not color_only:
+            # Try to sanitize whole fragment before doing anything else...
+            snippet = SnippetSanitizer.cleanup_snippet(snippet)
+
+        # Check if `[with ...]' parameter expansion present
+        match = _WITH_LIST_RE.search(snippet)
+        if match:
+            # We have smth complex... like:
+            # 'blah-blah [with Some = blah; Other = blah-blah]'
+            instantiation_of = snippet[:match.start()]
+            snippet = self.code \
+                + self._handle_code_fragment(instantiation_of, color_only) \
+                + current_color + '\n[ with\n'
+            # Ok, now iterate over instantiation args
+            for template_arg in match.group(1).split('; '):
+                snippet += '  ' + self.code \
+                    + self._handle_code_fragment(template_arg, color_only) \
+                    + current_color + '\n'
+            snippet += ']' + current_color
+        else:
+            snippet = self.code + self._handle_code_fragment(snippet, color_only) + current_color
+        return snippet
+
+
     def _try_code_snippets(self, line, current_color):
         cnt = line.count("'")
         if not cnt or cnt % 2:                              # Skip lines w/o quoted code, or mis-balanced quotes
@@ -127,26 +152,7 @@ class Processor(outproc.Processor):
         fragments = []
         for fragment in line.split("'"):
             if is_code_fragment:
-                # Try to sanitize whole fragment before doing anything else...
-                fragment = SnippetSanitizer.cleanup_snippet(fragment)
-
-                # Check if `[with ...]' parameter expansion present
-                match = _WITH_LIST_RE.search(fragment)
-                if match:
-                    # We have smth complex... like:
-                    # 'blah-blah [with Some = blah; Other = blah-blah]'
-                    instantiation_of = fragment[:match.start()]
-                    fragment = self.code \
-                      + self._handle_code_snippet(instantiation_of, False) \
-                      + current_color + '\n[ with\n'
-                    # Ok, now iterate over instantiation args
-                    for template_arg in match.group(1).split('; '):
-                        fragment += '  ' + self.code \
-                          + self._handle_code_snippet(template_arg, False) \
-                          + current_color + '\n'
-                    fragment += ']' + current_color
-                else:
-                    fragment = self.code + self._handle_code_snippet(fragment, False) + current_color
+                fragment = self._handle_code_snippet(fragment, current_color, False)
             is_code_fragment = not is_code_fragment
             fragments.append(fragment)
         return "'".join(fragments)
@@ -155,7 +161,7 @@ class Processor(outproc.Processor):
     def _handle_link_error(self, line, function):
         idx = line.find(function)
         assert(idx != -1)
-        code = self.code + self._handle_code_snippet(function, False) + self.error
+        code = self.code + self._handle_code_fragment(function, False) + self.error
         line = line[:idx] + code + line[idx + len(function):]
         return self._handle_error(line, idx + len(code))
 
@@ -184,7 +190,7 @@ class Processor(outproc.Processor):
     def _handle_notice_with_code(self, line, code_start_pos):
         line = line[:code_start_pos] \
           + self.code \
-          + self._handle_code_snippet(line[code_start_pos:], True) \
+          + self._handle_code_snippet(line[code_start_pos:], self.notice, False) \
           + self.config.color.reset
         return self._try_colorize_location(line, self.notice)
 
@@ -238,6 +244,7 @@ class Processor(outproc.Processor):
             is_look_like_notice = line.endswith('suggested alternatives:')               \
               or line.endswith('suggested alternative:')                                 \
               or line.endswith('candidate is:')                                          \
+              or line.endswith('candidates are:')                                        \
               or line.endswith('invalid template non-type parameter')                    \
               or line.endswith('template argument deduction/substitution failed:')
             if is_look_like_notice:
@@ -256,7 +263,7 @@ class Processor(outproc.Processor):
         if line.strip() == '^':
             assert(self.prev_line is not None)
             pos = len(line) - 1
-            line = self.code + self._handle_code_snippet(self.prev_line, True) + self.config.color.reset
+            line = self.code + self._handle_code_fragment(self.prev_line, True) + self.config.color.reset
 
             # Find a cursor position for a transformed line
             pos = outproc.term.pos_to_offset(line, pos)

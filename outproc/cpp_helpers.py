@@ -308,6 +308,15 @@ class SimpleCppLexer(object):
 _BOOST_VARIANT_DETAILS_SNTZ_RE = re.compile('(T[0-9_]+)( = boost::detail::variant::void_);( T[0-9_]+\\2;)* (T[0-9_]+)\\2(;)?')
 _GENERATED_TEMPLATE_PARAMS_SNTZ_RE = re.compile('(class|typename) ([A-Z])([0-9]+),( \\1 \\2[0-9]+,)* \\1 \\2([0-9]+)')
 _GENERATED_TEMPLATE_PARAMS_INST_SNTZ_RE = re.compile('([A-Z])([0-9]+),( \\1[0-9]+,)* \\1([0-9]+)')
+_STD_PLACEHOLDER = 'std::_Placeholder<'
+# NOTE Order is important!
+_BUILTIN_DATA_TYPES_MAPPING = [
+    ('long unsigned int', 'unsigned long')
+  , ('long int', 'long')
+  , ('short int', 'short')
+  , ('short unsigned int', 'unsigned short')
+  , ('unsigned int', 'unsigned')
+  ]
 
 
 class SnippetSanitizer(object):
@@ -364,11 +373,46 @@ class SnippetSanitizer(object):
         return snippet.replace('template<class ', 'template <class ')
 
 
+    def _parameters_pack_fixer(snippet):
+        '''Remove a space before '...'
+            'class ... Args' to  'class... Args'
+        '''
+        idx = snippet.find(' ...')
+        while idx != -1:
+            # Do not remove space function declarations...
+            if snippet[idx - 1] != ',':
+                snippet = snippet[:idx] + snippet[idx+1:]
+            idx = snippet.find(' ...', idx)
+        return snippet
+
+
+    def _hide_some_std_details(snippet):
+        idx = snippet.find(_STD_PLACEHOLDER)
+        while idx != -1:
+            close_pos = snippet.find('>', idx)
+            assert(close_pos != -1)
+            snippet = snippet[:idx] \
+              + 'std::placeholders::_' \
+              + snippet[idx+len(_STD_PLACEHOLDER):close_pos] \
+              + snippet[close_pos+1:]
+            idx = snippet.find(_STD_PLACEHOLDER, idx + len(_STD_PLACEHOLDER))
+        return snippet
+
+
+    def _simplify_some_data_types(snippet):
+        for what, to in _BUILTIN_DATA_TYPES_MAPPING:
+            snippet = snippet.replace(what, to)
+        return snippet
+
+
     _SANITIZERS = [
         _boost_variant_details_cleaner
       , _generated_template_params_cleaner
       , _generated_template_params_inst_cleaner
       , _template_decl_fixer_1
+      , _parameters_pack_fixer
+      , _hide_some_std_details
+      , _simplify_some_data_types
       ]
 
 

@@ -13,7 +13,7 @@ sys.path.insert(0, '..')
 
 # Project specific imports
 import outproc
-from outproc.cpp_helpers import SimpleCppLexer
+from outproc.cpp_helpers import SimpleCppLexer, SnippetSanitizer
 
 class SimpleCppLexerTester(unittest.TestCase):
 
@@ -136,3 +136,39 @@ class SimpleCppLexerTester(unittest.TestCase):
         stmt = SimpleCppLexer.assemble_statement(tokens)
         self.assertEqual(stmt, line)
 
+
+
+class CppSanitizerTester(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+
+    def test_0(self):
+        line = 'std::_Placeholder<1>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'std::placeholders::_1')
+
+
+    def test_1(self):
+        line = 'text before std::_Placeholder<12>, text after'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'text before std::placeholders::_12, text after')
+
+
+    def test_2(self):
+        line = 'text before std::_Placeholder<12>, text middle, std::_Placeholder<1>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'text before std::placeholders::_12, text middle, std::placeholders::_1')
+
+
+    def test_3(self):
+        line = 'template <class ... Args> void foo(Args&& ... args);'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'template <class... Args> void foo(Args&&... args);')
+
+
+    def test_4(self):
+        line = 'void foo(long unsigned int, unsigned int, short unsigned int);'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'void foo(unsigned long, unsigned, unsigned short);')
