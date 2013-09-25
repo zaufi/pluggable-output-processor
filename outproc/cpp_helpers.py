@@ -309,6 +309,8 @@ _BOOST_VARIANT_DETAILS_SNTZ_RE = re.compile('(T[0-9_]+)( = boost::detail::varian
 _GENERATED_TEMPLATE_PARAMS_SNTZ_RE = re.compile('(class|typename) ([A-Z])([0-9]+),( \\1 \\2[0-9]+,)* \\1 \\2([0-9]+)')
 _GENERATED_TEMPLATE_PARAMS_INST_SNTZ_RE = re.compile('([A-Z])([0-9]+),( \\1[0-9]+,)* \\1([0-9]+)')
 _STD_PLACEHOLDER = 'std::_Placeholder<'
+_STD_PLACEHOLDERS_NS = 'std::placeholders::_'
+_PARAMETER_PACK = ' ...'
 # NOTE Order is important!
 _BUILTIN_DATA_TYPES_MAPPING = [
     ('long unsigned int', 'unsigned long')
@@ -377,12 +379,12 @@ class SnippetSanitizer(object):
         '''Remove a space before '...'
             'class ... Args' to  'class... Args'
         '''
-        idx = snippet.find(' ...')
+        idx = snippet.find(_PARAMETER_PACK)
         while idx != -1:
             # Do not remove space function declarations...
             if snippet[idx - 1] != ',':
                 snippet = snippet[:idx] + snippet[idx+1:]
-            idx = snippet.find(' ...', idx)
+            idx = snippet.find(_PARAMETER_PACK, idx + len(_PARAMETER_PACK) - 1)
         return snippet
 
 
@@ -392,10 +394,10 @@ class SnippetSanitizer(object):
             close_pos = snippet.find('>', idx)
             assert(close_pos != -1)
             snippet = snippet[:idx] \
-              + 'std::placeholders::_' \
+              + _STD_PLACEHOLDERS_NS \
               + snippet[idx+len(_STD_PLACEHOLDER):close_pos] \
               + snippet[close_pos+1:]
-            idx = snippet.find(_STD_PLACEHOLDER, idx + len(_STD_PLACEHOLDER))
+            idx = snippet.find(_STD_PLACEHOLDER, idx + len(_STD_PLACEHOLDERS_NS))
         return snippet
 
 
