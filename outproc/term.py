@@ -50,9 +50,10 @@ def pos_to_offset(line, requested_pos):
         escape sequences.
 
         TODO Consider other than color ESC sequences
+        TODO Unit tests for this crap!
     '''
     assert(isinstance(line, str) and isinstance(requested_pos, int) and requested_pos < len(line))
-
+    print('line={}, pos={}'.format(repr(line), requested_pos))
     inside_esc_seq = False
     current_pos = 0
     for i, c in enumerate(line):
@@ -65,10 +66,11 @@ def pos_to_offset(line, requested_pos):
                 inside_esc_seq = False
                 #print('End ESC: {}'.format(i))
         else:
-            #print('i={}'.format(i))
+            current_pos += 1
             if current_pos == requested_pos:
                 return i
-            current_pos += 1
+            #print('i={}'.format(i))
+            #print('current_pos={}'.format(repr(current_pos)))
     assert(not 'Smth wrong w/ input sequence!')
 
 
