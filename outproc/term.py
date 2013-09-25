@@ -53,7 +53,7 @@ def pos_to_offset(line, requested_pos):
         TODO Unit tests for this crap!
     '''
     assert(isinstance(line, str) and isinstance(requested_pos, int) and requested_pos < len(line))
-    print('line={}, pos={}'.format(repr(line), requested_pos))
+    #print('line={}, pos={}'.format(repr(line), requested_pos))
     inside_esc_seq = False
     current_pos = 0
     for i, c in enumerate(line):
