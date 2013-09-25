@@ -146,6 +146,11 @@ class Application(object):
 
         self._find_wrapped_binary()
         self._load_pp_module()
+        if not self.pp_mod.Processor.want_to_handle_current_command():
+            # Ok, replace self w/ wrapped executable
+            os.execv(self.binary, [self.binary] + sys.argv[1:])
+            sys.exit(1)
+
         config = self._load_config(self.pp_mod.Processor.config_file_name(self.basename))
         processor = self._create_output_processor(config)
         process = self._start_wrapped_binary()

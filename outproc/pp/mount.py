@@ -22,9 +22,15 @@
 import os
 import outproc
 import outproc.term
+import sys
 
 
 class Processor(outproc.Processor):
+
+    @staticmethod
+    def want_to_handle_current_command():
+        return len(sys.argv) == 1 and os.path.basename(sys.argv[0]) == 'mount'
+
 
     def __init__(self, config, binary):
         super().__init__(config, binary)
@@ -43,6 +49,7 @@ class Processor(outproc.Processor):
         else:
             self.even_bg = outproc.term.fg2bg(self.even_bg)
 
+
     def _update_max_lengths(self, current, record):
         assert(len(record) == 4 and len(current) == 3)
         return (
@@ -50,6 +57,7 @@ class Processor(outproc.Processor):
           , max(current[1], len(record[1]))
           , max(current[2], len(record[2]))
           )
+
 
     def handle_block(self, block):
         records = []

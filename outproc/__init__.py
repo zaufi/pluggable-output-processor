@@ -81,6 +81,10 @@ class Processor(object):
     def config_file_name(module_name):
         return module_name + '.conf'
 
+    @staticmethod
+    def want_to_handle_current_command():
+        return True
+
 
 def report_error_with_backtrace(intro_message):
     exc_type, exc_value, exc_traceback = sys.exc_info()
