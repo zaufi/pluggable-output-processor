@@ -44,9 +44,9 @@ TODO
 * unit tests for tokenizer
 * test files w/ to cause various error messages from gcc (+ unit test for colorizer somehow)
 * continue to improve `cmake` support (+ unit tests)
-* turn `mount` output into a jumab readable look-n-feel
+* <del>turn `mount` output into a human readable look-n-feel</del> DONE
 * colorize `df` depending on free space threshold
 * colorize `diff` (easy! :-)
-* `eselect` module to manage tools under control
+* <del>`eselect` module to manage tools under control</del> DONE
 * ask module is it want to handle a current command or we can do `execv` instead
 * implement `STDIN` reader (pipe mode)

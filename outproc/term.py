@@ -20,9 +20,15 @@
 
 import os
 import re
+import sys
 
 _FG_COLOR_IN_ESC_SEQ_RE = re.compile('([^\d])3(\d)')
 
+def is_real_term():
+    return sys.stdout.isatty()
+
+def get_width():
+    return os.get_terminal_size().columns if sys.stdout.isatty() else 100500
 
 def move_above(lines):
     assert(isinstance(lines, int))

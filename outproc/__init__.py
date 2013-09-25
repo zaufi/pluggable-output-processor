@@ -48,12 +48,33 @@ class Processor(object):
     def __init__(self, config, binary):
         self.config = config
         self.binary = binary
+        self.read_buffer = b''
 
     def handle_line(self, line):
         return line
 
+    def handle_block(self, block):
+        self.read_buffer += block                           # Append just read block to a storage
+        pos = self.read_buffer.find(b'\n')                  # Try to find a line delimiter
+        lines = []
+        while pos != -1:                                    # Found?
+            line = self.read_buffer[:pos].decode('utf-8')
+            try:
+                line = self.handle_line(line)
+            except:
+                report_error_with_backtrace(
+                    'Post-process module ({}) failure'.format(os.path.basename(self.binary))
+                    )
+            if line is not None:                            # Ignore/hide the line if line handler returns None
+                lines.append(line)
+            pos +=1                                         # Remove '\n' from the input
+            self.read_buffer = self.read_buffer[pos:]       # Cut just processed line
+            pos = self.read_buffer.find(b'\n')              # Is there some more line remain?
+        return lines
+
     def eof(self):
-        pass
+        if self.read_buffer:
+            return [self.handle_line(self.read_buffer)]
 
     @staticmethod
     def config_file_name(module_name):

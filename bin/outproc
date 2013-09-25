@@ -129,6 +129,12 @@ class Application(object):
             sys.exit(1)
 
 
+    def _out_lines_list(self, lines):
+        if lines:
+            sys.stdout.write('\n'.join(lines) + '\n')
+            sys.stdout.flush()
+
+
     def run(self):
         # Check the binary name
         if self.basename == 'outproc':
@@ -150,7 +156,6 @@ class Application(object):
         po.register(process.stdout, select.EPOLLIN | select.EPOLLHUP)
 
         eof = False
-        read_buffer = b''
         while not eof:
             # Wait for data to become available
             events = None
@@ -167,34 +172,11 @@ class Application(object):
                 if event & select.EPOLLIN:
                     block = process.stdout.read()           # Read collected data
                     while block is not None and block:
-                        read_buffer += block                # Append just read block to a storage
-                        pos = read_buffer.find(b'\n')       # Try to find a line delimiter
-                        while pos != -1:                    # Found?
-                            line = read_buffer[:pos].decode('utf-8')
-                            try:
-                                line = processor.handle_line(line)
-                            except:
-                                outproc.report_error_with_backtrace(
-                                    'Post-process module ({}) failure'.format(self.basename)
-                                  )
-                            if line is not None:            # Ignore/hide the line if post-processor returns None
-                                sys.stdout.write(line)
-                                sys.stdout.write('\n')
-                                sys.stdout.flush()
-                            pos +=1                         # Remove '\n' from the input
-                            read_buffer = read_buffer[pos:] # Cut just processed line
-                            pos = read_buffer.find(b'\n')   # Is there some more line remain?
-                        # Try to read more data
-                        block = process.stdout.read()
-
+                        self._out_lines_list(processor.handle_block(block))
+                        block = process.stdout.read()       # Try to read more data
                 elif event & select.EPOLLHUP:
                     eof = True
-                    if len(read_buffer) != 0:
-                        line = processor.handle_line(read_buffer.decode('utf-8'))
-                        if line is not None:
-                            sys.stdout.write(line)
-                            sys.stdout.flush()
-                    processor.eof()                         # Notify processor about EOF
+                    self._out_lines_list(processor.eof())   # Notify processor about EOF
                 else:
                     assert(not 'Unexpected event {}'.format(event))
 
