@@ -137,6 +137,15 @@ class SimpleCppLexerTester(unittest.TestCase):
         self.assertEqual(stmt, line)
 
 
+    def test_13(self):
+        line = '''std::cout << __PRETTY_FUNCTION__ << ":\nname='"_ru << name << '\\'' << std::endl;'''
+        tokens = SimpleCppLexer.tokenize_string(line)
+        #print(tokens)
+        self.assertEqual(len(tokens), 12)
+        stmt = SimpleCppLexer.assemble_statement(tokens)
+        self.assertEqual(stmt, line)
+
+
 
 class CppSanitizerTester(unittest.TestCase):
 

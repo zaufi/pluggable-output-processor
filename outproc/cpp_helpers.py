@@ -176,6 +176,10 @@ class SimpleCppLexer(object):
                 token = prev_token
                 token.token += tok
                 replace_prev = True
+            elif prev_token and prev_token.kind == SimpleCppLexer.Token.STRING_LITERAL:
+                token = prev_token
+                token.token += tok
+                replace_prev = True
             else:
                 token = SimpleCppLexer.Token(tok, SimpleCppLexer.Token.IDENTIFIER)
         else:
@@ -212,10 +216,14 @@ class SimpleCppLexer(object):
             last_tokenized_pos = 0
             seen_slash = False
             seen_star = False
+            seen_backslash = False
             want_next = False
             for pos, c in enumerate(tok):
                 assert(not in_cpp_comment)
-                if in_string:
+                if seen_backslash:                          # Go to next char after backclash
+                    seen_backslash = False                  # Ok, backslash was counted...
+                    continue
+                elif in_string:
                     assert(string_char and not seen_slash and not seen_star)
                     # Ok, we r at string now... Check if current char is a quote symbol
                     # Check if string ends...
@@ -225,6 +233,8 @@ class SimpleCppLexer(object):
                         tokens[-1].token += tok[last_tokenized_pos:pos+1]
                         in_string = False                   # Drop the flag!
                         last_tokenized_pos = pos + 1
+                    elif c == '\\':
+                        seen_backslash = True
                 elif in_block_comment:
                     if seen_star and c == '/':              # Is end of block comment?
                         in_block_comment = False            # Drop the flag!
@@ -287,11 +297,12 @@ class SimpleCppLexer(object):
                     last_tokenized_pos = pos+1
                 else:
                     seen_slash = bool(c == '/')
+                    seen_backslash = bool(c == '\\')
                     seen_star = bool(c == '*')
 
-            # If we are at
-            if want_next:
-                continue
+            if want_next:                                   # If we are at C++ style comment
+                continue                                    # Go for next tokens immediately
+
             assert(not in_cpp_comment)
             if in_block_comment:
                 assert(tokens and tokens[-1].kind == SimpleCppLexer.Token.COMMENT)
@@ -299,7 +310,7 @@ class SimpleCppLexer(object):
             elif in_string:
                 assert(tokens and tokens[-1].kind == SimpleCppLexer.Token.STRING_LITERAL)
                 tokens[-1].token += tok[last_tokenized_pos:len(tok)]
-            else:
+            elif tok[last_tokenized_pos:len(tok)]:
                 token, replace_prev = SimpleCppLexer._categorize_token(
                     tok[last_tokenized_pos:len(tok)]
                   , tokens[-1] if tokens else None
