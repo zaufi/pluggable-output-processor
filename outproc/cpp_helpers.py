@@ -35,23 +35,30 @@ class SimpleCppLexer(object):
 
     _KEYWORDS = [
         'alignof'
+      , 'alignas'
+      , 'asm'
       , 'auto'
+      , 'break'
       , 'case'
       , 'catch'
       , 'class'
       , 'const_cast'
       , 'constexpr'
+      , 'continue'
       , 'decltype'
+      , 'default'
       , 'delete'
       , 'do'
       , 'dynamic_cast'
       , 'else'
       , 'enum'
       , 'explicit'
+      , 'export'
       , 'false'
       , 'final'
       , 'for'
       , 'friend'
+      , 'goto'
       , 'if'
       , 'inline'
       , 'namespace'
@@ -67,6 +74,7 @@ class SimpleCppLexer(object):
       , 'reinterpret_cast'
       , 'return'
       , 'sizeof'
+      , 'static_assert'
       , 'static_cast'
       , 'struct'
       , 'switch'
@@ -76,6 +84,7 @@ class SimpleCppLexer(object):
       , 'true'
       , 'try'
       , 'typedef'
+      , 'typeid'
       , 'typename'
       , 'union'
       , 'using'
@@ -98,6 +107,7 @@ class SimpleCppLexer(object):
       , 'short'
       , 'int'
       , 'unsigned'
+      , 'signed'
       , 'long'
       , 'float'
       , 'double'
@@ -185,6 +195,7 @@ class SimpleCppLexer(object):
         in_string = False
         in_block_comment = False
         in_cpp_comment = False
+        string_char = None
         for tok in re.split('(\W+)', snippet):              # Split the whole snippet by elementary tokens
             if not tok:                                     # Last item can be empty
                 continue                                    # Just skip it!
@@ -205,10 +216,10 @@ class SimpleCppLexer(object):
             for pos, c in enumerate(tok):
                 assert(not in_cpp_comment)
                 if in_string:
-                    assert(not seen_slash and not seen_star)
+                    assert(string_char and not seen_slash and not seen_star)
                     # Ok, we r at string now... Check if current char is a quote symbol
                     # Check if string ends...
-                    if c == '"':
+                    if c == string_char:
                         assert(tokens)
                         # Join chars before (including a current) to a prev token
                         tokens[-1].token += tok[last_tokenized_pos:pos+1]
@@ -249,8 +260,9 @@ class SimpleCppLexer(object):
                     if in_cpp_comment:                      # C++ comments do not require further parsing...
                         want_next = True                    # Order to go for next token after this loop
                         break                               # immediately!
-                elif c == '"':
+                elif c == '"' or c == "'":
                     in_string = True
+                    string_char = c
                     # Append anything before it as a separate token
                     before = None
                     if 0 < (pos - 1):                       # Is this not a token start?
@@ -372,7 +384,9 @@ class SnippetSanitizer(object):
 
     def _template_decl_fixer_1(snippet):
         # TODO How to replace `class' w/ `typename'? All occurrences ...
-        return snippet.replace('template<class ', 'template <class ')
+        return snippet.replace('template<class ', 'template <class ') \
+            .replace('template< typename ', 'template <typename ') \
+            .replace('template<template ', 'template <template ')
 
 
     def _parameters_pack_fixer(snippet):

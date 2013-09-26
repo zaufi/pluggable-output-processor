@@ -246,7 +246,8 @@ class Processor(outproc.Processor):
               or line.endswith('candidate is:')                                          \
               or line.endswith('candidates are:')                                        \
               or line.endswith('invalid template non-type parameter')                    \
-              or line.endswith('template argument deduction/substitution failed:')
+              or line.endswith('template argument deduction/substitution failed:')       \
+              or line.endswith(' provided')
             if is_look_like_notice:
                 return self._handle_notice(line)
             cnt = line.count("'")
