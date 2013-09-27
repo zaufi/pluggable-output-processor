@@ -143,7 +143,7 @@ class Processor(outproc.Processor):
         return snippet
 
 
-    def _try_code_snippets(self, line, current_color):
+    def _try_line_with_quoted_code(self, line, current_color):
         cnt = line.count("'")
         if not cnt or cnt % 2:                              # Skip lines w/o quoted code, or mis-balanced quotes
             return line
@@ -169,20 +169,20 @@ class Processor(outproc.Processor):
     def _handle_error(self, line, start_at):
         #line = self._inject_color_at(line, self.error, start_at)
         line = self._try_colorize_location(line, self.error)
-        line = self._try_code_snippets(line, self.error)
+        line = self._try_line_with_quoted_code(line, self.error)
         return line + self.config.color.reset
 
 
     def _handle_warning(self, line, start_at):
         #line = self._inject_color_at(line, self.warning, start_at)
         line = self._try_colorize_location(line, self.warning)
-        line = self._try_code_snippets(line, self.warning)
+        line = self._try_line_with_quoted_code(line, self.warning)
         return line + self.config.color.reset
 
 
     def _handle_notice(self, line):
         line = self._try_colorize_location(line, self.notice)
-        line = self._try_code_snippets(line, self.notice)
+        line = self._try_line_with_quoted_code(line, self.notice)
         line = self._inject_color_at(line, self.notice, 0)
         return line + self.config.color.reset
 
@@ -196,6 +196,9 @@ class Processor(outproc.Processor):
 
 
     def handle_line(self, line):
+        # Replace "couldn't" --> "could not" to avoid char literal ambiguity
+        line = line.replace("couldn't", "could not")
+
         # Categorize message first...
 
         # Trying various error messages
@@ -217,7 +220,7 @@ class Processor(outproc.Processor):
         if match:
             return self._handle_warning(line, match.start())
 
-        # TODO Transform into container of strings and predicate evaluation
+        # TODO Transform into a container of strings and a predicate evaluation
         is_look_like_notice = line.find(' In instantiation of') != -1 \
           or line.find(' In function') != -1                          \
           or line.find(' In member function') != -1                   \
