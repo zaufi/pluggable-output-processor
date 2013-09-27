@@ -83,7 +83,7 @@ class Processor(object):
 
     @staticmethod
     def want_to_handle_current_command():
-        return True
+        return sys.stdout.isatty()
 
 
 def report_error_with_backtrace(intro_message):

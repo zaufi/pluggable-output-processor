@@ -29,7 +29,12 @@ class Processor(outproc.Processor):
 
     @staticmethod
     def want_to_handle_current_command():
-        return len(sys.argv) == 1 and os.path.basename(sys.argv[0]) == 'mount'
+        '''Post-process output from `mount` only if executed w/o args
+            and STDOUT is not already captured
+        '''
+        return sys.stdout.isatty() \
+          and len(sys.argv) == 1 \
+          and os.path.basename(sys.argv[0]) == 'mount'
 
 
     def __init__(self, config, binary):
