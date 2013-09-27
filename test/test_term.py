@@ -29,19 +29,19 @@ class ComplierCmdLineMatchTester(unittest.TestCase):
 
     def test_pos_to_offset_0(self):
         line = 'Hello Africa'
-        colored = self.red_fg + line + self.config.color.reset
+        colored = self.yellow_fg + line + self.config.color.reset
         #print('{}'.format(repr(colored)))
 
         pos = outproc.term.pos_to_offset(colored, 0)
-        self.assertEqual(pos, 5)
+        self.assertEqual(pos, 9)
         self.assertEqual(colored[pos], 'H')
 
         pos = outproc.term.pos_to_offset(colored, 6)
-        self.assertEqual(pos, 11)
+        self.assertEqual(pos, 15)
         self.assertEqual(colored[pos], 'A')
 
         pos = outproc.term.pos_to_offset(colored, len(line) - 1)
-        self.assertEqual(pos, 16)
+        self.assertEqual(pos, 20)
         self.assertEqual(colored[pos], 'a')
 
 
@@ -50,21 +50,36 @@ class ComplierCmdLineMatchTester(unittest.TestCase):
         colored = self.white_fg + ' ' + self.yellow_fg + line + self.config.color.reset
         #print('{}'.format(repr(colored)))
         pos = outproc.term.pos_to_offset(colored, 1)
-        self.assertEqual(pos, 15)
+        self.assertEqual(pos, 17)
         self.assertEqual(colored[pos], 'H')
 
 
-    def test_bg_highlight(self):
+    def test_bg_highlight_1(self):
         self.reg_bg = outproc.term.fg2bg(self.red_fg)
         line = 'Hello Africa'
         line = self.yellow_fg + line + self.config.color.reset
-        print('{}'.format(repr(line)))
-        pos = outproc.term.pos_to_offset(line, 6)
-        self.assertEqual(line[pos], 'A')
-        print('line[:pos]={}'.format(repr(line[:pos])))
-        print('line[pos:pos+1]={}'.format(repr(line[pos:pos+1])))
-        print('line[pos+1:]={}'.format(repr(line[pos+1:])))
+
+        pos = outproc.term.pos_to_offset(line, 0)
+        self.assertEqual(line[pos], 'H')
         line = line[:pos] + self.reg_bg + line[pos:pos+1] + self.config.color.normal_bg \
           + line[pos+1:]
-        print('{}'.format(repr(line)))
-        print('{}'.format(line))
+        self.assertEqual(line, '\x1b[0;33;1m\x1b[41mH\x1b[48mello Africa\x1b[0m')
+        #print('{}'.format(repr(line)))
+        #print('{}'.format(line))
+
+        pos = outproc.term.pos_to_offset(line, 6)
+        self.assertEqual(line[pos], 'A')
+        line = line[:pos] + self.reg_bg + line[pos:pos+1] + self.config.color.normal_bg \
+          + line[pos+1:]
+        self.assertEqual(line, '\x1b[0;33;1m\x1b[41mH\x1b[48mello \x1b[41mA\x1b[48mfrica\x1b[0m')
+        #print('{}'.format(repr(line)))
+        #print('{}'.format(line))
+
+        pos = outproc.term.pos_to_offset(line, 11)
+        self.assertEqual(line[pos], 'a')
+        line = line[:pos] + self.reg_bg + line[pos:pos+1] + self.config.color.normal_bg \
+          + line[pos+1:]
+        self.assertEqual(line, '\x1b[0;33;1m\x1b[41mH\x1b[48mello \x1b[41mA\x1b[48mfric\x1b[41ma\x1b[48m\x1b[0m')
+        #print('{}'.format(repr(line)))
+        #print('{}'.format(line))
+

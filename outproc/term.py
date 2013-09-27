@@ -53,24 +53,19 @@ def pos_to_offset(line, requested_pos):
         TODO Unit tests for this crap!
     '''
     assert(isinstance(line, str) and isinstance(requested_pos, int) and requested_pos < len(line))
-    #print('line={}, pos={}'.format(repr(line), requested_pos))
     inside_esc_seq = False
     current_pos = 0
     for i, c in enumerate(line):
         if c == '\x1b':                                     # Start of ESC sequence
             assert(not inside_esc_seq)
             inside_esc_seq = True
-            #print('Start ESC: {}'.format(i))
         elif inside_esc_seq:                                # Already in a ESC sequence
             if c == 'm':                                    # Is end of escape sequence?
                 inside_esc_seq = False
-                #print('End ESC: {}'.format(i))
         else:
-            current_pos += 1
             if current_pos == requested_pos:
                 return i
-            #print('i={}'.format(i))
-            #print('current_pos={}'.format(repr(current_pos)))
+            current_pos += 1
     assert(not 'Smth wrong w/ input sequence!')
 
 

@@ -256,14 +256,14 @@ class Processor(outproc.Processor):
             return self._handle_notice(line)
 
         # All standalong code snippets (AFAIK) starts w/ at least one space...
-        if line.strip() != '^' and line[0] == ' ':
+        pos = line.find('^')
+        if pos == -1 and line[0] == ' ':
             assert(self.prev_line is None)
             self.prev_line = line
             return None
 
-        if line.strip() == '^':
+        if pos != -1:
             assert(self.prev_line is not None)
-            pos = len(line) - 1
             line = self.code + self._handle_code_fragment(self.prev_line, True) + self.config.color.reset
 
             # Find a cursor position for a transformed line
@@ -272,7 +272,7 @@ class Processor(outproc.Processor):
               + line[pos+1:] + ('\n' if self.nl else '')
             self.prev_line = None
 
-        # Return unmodified line
+        # Return unmodified line if nothing has matched
         return line
 
 
