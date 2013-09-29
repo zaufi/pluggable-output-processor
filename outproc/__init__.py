@@ -27,6 +27,7 @@ from outproc.config import Config
 
 
 SYSCONFDIR = '/etc/outproc'
+FORCE_PROCESSING_ENV = 'OUTPROC_FORCE_PROCESSING'
 
 log = None
 try:
@@ -83,7 +84,7 @@ class Processor(object):
 
     @staticmethod
     def want_to_handle_current_command():
-        return sys.stdout.isatty()
+        return sys.stdout.isatty() or int(os.environ[FORCE_PROCESSING_ENV])
 
 
 def report_error_with_backtrace(intro_message):

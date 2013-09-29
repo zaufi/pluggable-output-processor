@@ -23,6 +23,7 @@ import os
 import outproc
 import re
 import shlex
+import sys
 
 _KNOWN_COMPILERS = ['c++', 'g++', 'gcc']
 
@@ -31,6 +32,14 @@ _MAKE_ERROR_MSG_RE = re.compile('make(\[[0-9]+\])?: \*\*\*')
 _MAKE_MISC_PATH_RE = re.compile('.*(`.*\').*')
 
 class Processor(outproc.Processor):
+
+    @staticmethod
+    def want_to_handle_current_command():
+        result = sys.stdout.isatty() or int(os.environ[outproc.FORCE_PROCESSING_ENV])
+        if result:
+            os.environ[outproc.FORCE_PROCESSING_ENV] = '1'
+        return result
+
 
     def __init__(self, config, binary):
         super().__init__(config, binary)
