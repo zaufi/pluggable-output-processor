@@ -27,22 +27,24 @@ from outproc.config import Config
 
 
 SYSCONFDIR = '/etc/outproc'
-FORCE_PROCESSING_ENV = 'OUTPROC_FORCE_PROCESSING'
 
 log = None
 try:
-    import portage.output
+    import portage.outputz
     log = portage.output.EOutput()
 except ImportError:
     class FakeLogger(object):
         def einfo(self, msg):
-            print(msg)
+            print(' \x1b[0;32;1m*\x1b[0m {}'.format(msg))
         def eerror(self, msg):
-            print(msg, file=sys.stderr)
+            print(' \x1b[0;31;1m*\x1b[0m {}'.format(msg), file=sys.stderr)
         def ewarn(self, msg):
-            print(msg)
+            print(' \x1b[0;33;1m*\x1b[0m {}'.format(msg))
 
     log = FakeLogger()
+
+
+_FORCE_PROCESSING_ENV = 'OUTPROC_FORCE_PROCESSING'
 
 
 class Processor(object):
@@ -84,7 +86,11 @@ class Processor(object):
 
     @staticmethod
     def want_to_handle_current_command():
-        return sys.stdout.isatty() or int(os.environ[FORCE_PROCESSING_ENV])
+        return sys.stdout.isatty() or force_processing_requested()
+
+
+def force_processing_requested():
+    return _FORCE_PROCESSING_ENV in os.environ and int(os.environ[_FORCE_PROCESSING_ENV])
 
 
 def report_error_with_backtrace(intro_message):
