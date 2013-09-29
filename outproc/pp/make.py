@@ -37,7 +37,7 @@ class Processor(outproc.Processor):
     def want_to_handle_current_command():
         result = sys.stdout.isatty() or outproc.force_processing_requested()
         if result:
-            os.environ[outproc.FORCE_PROCESSING_ENV] = '1'
+            outproc.force_processing()
         return result
 
 

@@ -89,6 +89,10 @@ class Processor(object):
         return sys.stdout.isatty() or force_processing_requested()
 
 
+def force_processing():
+    os.environ[_FORCE_PROCESSING_ENV] = '1'
+
+
 def force_processing_requested():
     return _FORCE_PROCESSING_ENV in os.environ and int(os.environ[_FORCE_PROCESSING_ENV])
 
