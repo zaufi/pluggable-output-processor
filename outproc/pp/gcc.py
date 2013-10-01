@@ -107,7 +107,7 @@ class Processor(outproc.Processor):
             elif tok.kind == SimpleCppLexer.Token.COMMENT:
                 tokens[i].token = self._colorize_token(tok, self.code_comment)
             elif tok.kind == SimpleCppLexer.Token.IDENTIFIER:
-                if tok.token.startswith('boost::'):
+                if tok.token.startswith('boost::') or tok.token.startswith('BOOST_'):
                     tokens[i].token = self._colorize_token(tok, self.code_boost_ns)
                 elif tok.token.startswith('std::'):
                     tokens[i].token = self._colorize_token(tok, self.code_std_ns)
