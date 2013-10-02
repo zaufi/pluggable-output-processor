@@ -22,7 +22,7 @@ import sys
 
 distutils.core.setup(
     name             = 'outproc'
-  , version          = '0.4'
+  , version          = '0.5'
   , description      = 'Pluggable Output Processor'
   , maintainer       = 'Alex Turbov'
   , maintainer_email = 'I.zaufi@gmail.com'
