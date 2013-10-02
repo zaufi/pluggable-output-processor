@@ -200,6 +200,7 @@ class SimpleCppLexer(object):
         in_block_comment = False
         in_cpp_comment = False
         string_char = None
+        #print("tokens={}".format(repr(re.split('(\W+)', snippet))))
         for tok in re.split('(\W+)', snippet):              # Split the whole snippet by elementary tokens
             if not tok:                                     # Last item can be empty
                 continue                                    # Just skip it!
@@ -275,7 +276,7 @@ class SimpleCppLexer(object):
                     string_char = c
                     # Append anything before it as a separate token
                     before = None
-                    if 0 < (pos - 1):                       # Is this not a token start?
+                    if 0 < pos:                             # Is this not a token start?
                         before = tok[last_tokenized_pos:pos]
                     if before:
                         token, replace_prev = SimpleCppLexer._categorize_token(

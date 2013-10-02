@@ -146,6 +146,15 @@ class SimpleCppLexerTester(unittest.TestCase):
         self.assertEqual(stmt, line)
 
 
+    def test_14(self):
+        line = '''QString("Using PCH file: %1%").arg(config().precompiledHeaderFile())'''
+        tokens = SimpleCppLexer.tokenize_string(line)
+        #print(tokens)
+        self.assertEqual(len(tokens), 10)
+        stmt = SimpleCppLexer.assemble_statement(tokens)
+        self.assertEqual(stmt, line)
+
+
 
 class CppSanitizerTester(unittest.TestCase):
 
