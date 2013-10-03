@@ -330,6 +330,7 @@ class SimpleCppLexer(object):
 
 
 _BOOST_VARIANT_DETAILS_SNTZ_RE = re.compile('(T[0-9_]+)( = boost::detail::variant::void_);( T[0-9_]+\\2;)* (T[0-9_]+)\\2(;)?')
+_BOOST_TAIL_OF_SOME_DETAILS_SNTZ_RE = re.compile('(, (boost::detail::variant::void_|mpl_::na))*>')
 _GENERATED_TEMPLATE_PARAMS_SNTZ_RE = re.compile('(class|typename) ([A-Z])([0-9]+),( \\1 \\2[0-9]+,)* \\1 \\2([0-9]+)')
 _GENERATED_TEMPLATE_PARAMS_INST_SNTZ_RE = re.compile('([A-Z])([0-9]+),( \\1[0-9]+,)* \\1([0-9]+)')
 _STD_PLACEHOLDER = 'std::_Placeholder<'
@@ -357,6 +358,10 @@ class SnippetSanitizer(object):
               + '{} to {}{}{}'.format(match.group(1), match.group(4), match.group(2), match.group(5)) \
               + snippet[match.end():]
         return snippet
+
+
+    def _boost_remove_tail_of_some_details(snippet):
+        return re.sub(_BOOST_TAIL_OF_SOME_DETAILS_SNTZ_RE, '>', snippet)
 
 
     def _generated_template_params_cleaner(snippet):
@@ -427,6 +432,15 @@ class SnippetSanitizer(object):
         return snippet
 
 
+    def _squeeze_right_angle_brackets(snippet):
+        # Squeeze closing angle brackets
+        pos = snippet.find('> >')
+        while pos != -1:
+            snippet = snippet[:pos] + '>>' + snippet[pos+3:]
+            pos = snippet.find('> >', pos + 1)
+        return snippet
+
+
     def _simplify_some_data_types(snippet):
         for what, to in _BUILTIN_DATA_TYPES_MAPPING:
             snippet = snippet.replace(what, to)
@@ -435,11 +449,13 @@ class SnippetSanitizer(object):
 
     _SANITIZERS = [
         _boost_variant_details_cleaner
+      , _boost_remove_tail_of_some_details
       , _generated_template_params_cleaner
       , _generated_template_params_inst_cleaner
       , _template_decl_fixer_1
       , _parameters_pack_fixer
       , _hide_some_std_details
+      , _squeeze_right_angle_brackets
       , _simplify_some_data_types
       ]
 

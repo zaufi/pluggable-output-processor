@@ -190,3 +190,15 @@ class CppSanitizerTester(unittest.TestCase):
         line = 'void foo(long unsigned int, unsigned int, short unsigned int);'
         result = SnippetSanitizer.cleanup_snippet(line)
         self.assertEqual(result, 'void foo(unsigned long, unsigned, unsigned short);')
+
+
+    def test_5(self):
+        line = 'std::vector<std::pair<int, std::list<std::string> > >'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'std::vector<std::pair<int, std::list<std::string>>>')
+
+
+    def test_6(self):
+        line = 'std::vector<std::pair<int, std::list<std::basic_string<char16_t> > > >'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'std::vector<std::pair<int, std::list<std::basic_string<char16_t>>>>')

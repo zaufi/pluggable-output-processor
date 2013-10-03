@@ -77,16 +77,6 @@ class Processor(outproc.Processor):
 
 
     def _handle_code_fragment(self, snippet, color_only):
-        # Try to sanitize it if possible before colorize!
-        if not color_only:
-            # Replace default parameters from boost::make_variant_over instantiations
-            vd = 'boost::detail::variant::void_'
-            snippet = re.sub('(, boost::detail::variant::void_)*>', '>', snippet)
-
-            # Squeeze closing angle brackets
-            while snippet.find('> >') != -1:
-                snippet = snippet.replace('> >', '>>')
-
         # Tokenize a given snippet
         tokens = SimpleCppLexer.tokenize_string(snippet)
         #print('tokens={}'.format(tokens))
