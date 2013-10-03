@@ -19,6 +19,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import collections
 import os
 import outproc
 import outproc.term
@@ -31,7 +32,10 @@ _LOCATION_RE = re.compile('([^ :]+?):([0-9]+(,|:[0-9]+[:,]?)?)?')
 # /tmp/ccUlKMZA.o:zz.cc:function main: error: undefined reference to 'boost::iostreams::zlib::default_strategy'
 _LINK_ERROR_RE = re.compile(':function (.*): error: ')
 _SKIPPING_WARN = re.compile('\[ skipping [0-9]+ instantiation contexts[^\]]+\]')
-_WITH_LIST_RE = re.compile(' \[with (.*)\]')
+_WITH_LIST_START = ' [with '
+
+# Introduce a named tuple class
+Range = collections.namedtuple('Range', ['start', 'end'])
 
 
 class Processor(outproc.Processor):
@@ -114,23 +118,71 @@ class Processor(outproc.Processor):
             snippet = SnippetSanitizer.cleanup_snippet(snippet)
 
         # Check if `[with ...]' parameter expansion present
-        match = _WITH_LIST_RE.search(snippet)
-        if match:
-            # We have smth complex... like:
-            # 'blah-blah [with Some = blah; Other = blah-blah]'
-            instantiation_of = snippet[:match.start()]
-            snippet = self.code \
-                + self._handle_code_fragment(instantiation_of, color_only) \
-                + current_color + '\n[ with\n'
-            # Ok, now iterate over instantiation args
-            for template_arg in match.group(1).split('; '):
-                snippet += '  ' + self.code \
-                    + self._handle_code_fragment(template_arg, color_only) \
+        pos = snippet.find(_WITH_LIST_START)
+        if pos == -1:
+            # Handle an ordinal snippet...
+            return self.code + self._handle_code_fragment(snippet, color_only) + current_color
+
+        # Handle a complex message w/ possible few '[ with ' template argument expansions...
+        result = ''
+        last_leading_pos = 0
+        # There are few '[with ' possible in one message
+        while pos != -1:
+            # Copy everything before '[with' (if anything present)
+            if last_leading_pos != pos:
+                result += self.code \
+                    + self._handle_code_fragment(snippet[last_leading_pos:pos], color_only) \
+                    + current_color + '\n[ with\n'
+            else:
+                result += current_color + '\n[ with\n'
+
+            # Find corresponding close ']'... and get a list of ranges of template args
+            arg_ranges = []
+            with_start_pos = pos + len(_WITH_LIST_START)
+            last_arg_start = with_start_pos
+            opened_square_brackets = 0
+            seen_semicolon = False
+            for i, c in enumerate(snippet[last_arg_start:]):
+                if c == ';':
+                    seen_semicolon = True
+                elif c == ' ' and seen_semicolon:
+                    assert(last_arg_start < with_start_pos + i - 1)
+                    arg_ranges.append(Range(last_arg_start, with_start_pos + i - 1))
+                    last_arg_start = with_start_pos + i + 1
+                    seen_semicolon = False
+                elif c == '[':
+                    opened_square_brackets += 1
+                    assert(not seen_semicolon)
+                elif c == ']':
+                    assert(not seen_semicolon)
+                    if not opened_square_brackets:
+                        # Found a closing square bracket!
+                        # Append last template arg
+                        arg_ranges.append(Range(last_arg_start, with_start_pos + i))
+                        assert(pos < with_start_pos + i)
+                        pos = with_start_pos + i + 1
+                        break
+                    else:
+                        opened_square_brackets -= 1
+
+            # Check invariant
+            assert('Misbalanced brackets?' and not opened_square_brackets)
+            assert('Template argument ranges expected to be non empty' and arg_ranges)
+
+            # Iterate over found template parameters
+            for r in arg_ranges:
+                result += '  ' + self.code \
+                    + self._handle_code_fragment(snippet[r.start:r.end], color_only) \
                     + current_color + '\n'
-            snippet += ']' + current_color
-        else:
-            snippet = self.code + self._handle_code_fragment(snippet, color_only) + current_color
-        return snippet
+
+            # Append closing square bracket for current '[with'
+            result += ']'
+            last_leading_pos = pos
+
+            # Try to find a next '[with ' starting from last (current) position...
+            pos = snippet.find(_WITH_LIST_START, pos)
+
+        return result
 
 
     def _try_line_with_quoted_code(self, line, current_color):
