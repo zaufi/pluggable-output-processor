@@ -31,11 +31,16 @@ _MAKE_MGS_RE = re.compile('make(\[[0-9]+\])?: ')
 _MAKE_ERROR_MSG_RE = re.compile('make(\[[0-9]+\])?: \*\*\*')
 _MAKE_MISC_PATH_RE = re.compile('.*(`.*\').*')
 
+
 class Processor(outproc.Processor):
 
     @staticmethod
     def want_to_handle_current_command():
-        result = sys.stdout.isatty() or outproc.force_processing_requested()
+        # Try to handle an output if:
+        # 0) `menuconfig` target is not specified in command line (when linux kernel get compiled)
+        # 1) we are connected to a real terminal or force flag set in the current environment
+        result = 'menuconfig' not in sys.argv \
+          and (sys.stdout.isatty() or outproc.force_processing_requested())
         if result:
             outproc.force_processing()
         return result
