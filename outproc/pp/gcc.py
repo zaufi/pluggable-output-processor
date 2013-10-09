@@ -309,6 +309,15 @@ class Processor(outproc.Processor):
 
         if pos != -1:
             assert(self.prev_line is not None)
+            # Check if caret points after the end of a previous line.
+            # For example:
+            # /tmp/nn.cc:2:21: fatal error: iostreamz: No such file or directory
+            # #include <iostreamz>
+            #                     ^
+            if len(self.prev_line) <= pos:
+                # Append spaces to it! So pos_to_offset() will find a requested
+                # position after line gets colorized...
+                self.prev_line += ' ' * (pos - len(self.prev_line) + 1)
             line = self.code + self._handle_code_fragment(self.prev_line, True) + self.config.color.reset
 
             # Find a cursor position for a transformed line
