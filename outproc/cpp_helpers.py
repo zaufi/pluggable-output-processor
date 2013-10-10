@@ -442,6 +442,7 @@ class SnippetSanitizer(object):
         if not has_at_least_one_match:
             result = snippet                                # Set result to the original snippet
         else:
+            # Do we have smth matched and not flushed yet?
             if last_match is not None:
                 result += delim + SnippetSanitizer._format_matched_params(last_match, arg_num) + snippet
             else:
