@@ -364,16 +364,14 @@ class SnippetSanitizer(object):
         return re.sub(_BOOST_TAIL_OF_SOME_DETAILS_SNTZ_RE, '>', snippet)
 
 
-    def _format_matched_params(match, counter):
-        #print('  fmt: counter={}'.format(repr(counter)))
-        #print('  fmt: match={}'.format(repr(match.groups())))
+    def _format_matched_params(match, num_args):
+        assert(match)
         kw = (match.group(1) if match.group(1) else '')
         result = kw + match.group(3) + match.group(4)
-        if 1 < counter:
-            result += ', ..., ' + kw + match.group(3) + str(int(match.group(4)) + counter)
-        if counter == 1:
-            result += ', ' + kw + match.group(3) + str(int(match.group(4)) + counter)
-        #print('  fmt: result={}'.format(repr(result)))
+        if 1 < num_args:
+            result += ', ..., ' + kw + match.group(3) + str(int(match.group(4)) + num_args)
+        if num_args == 1:
+            result += ', ' + kw + match.group(3) + str(int(match.group(4)) + num_args)
         return result
 
 
@@ -381,93 +379,73 @@ class SnippetSanitizer(object):
         '''
             `class Tn, ..., class Tm' template parameters
         '''
-        match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
-        has_at_least_one_match = False
         last_match = None
-        cur_cnt = 0
-        result = ''
-        #it = 0
+        arg_num = 0
         delim = ''
+        result = ''
+        match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
+        has_at_least_one_match = bool(match)
         while match:
-            #it+=1
-            #print('---[{}----------'.format(repr(it)))
-            has_at_least_one_match = True
             latest_match_pos = match.end()
-            #print('snippet={}'.format(repr(snippet)))
-            #print('result={}'.format(repr(result)))
-            #print('start={}, match.groups()={}'.format(match.start(), repr(match.groups())))
-            # Ok, smth found! Is there a prevous match?
-            do_not_match = False
+            # Ok, smth found! Is there a previous match?
+            do_match = True
             if last_match:
-                #print('last_match.groups()={}'.format(repr(last_match.groups())))
+                do_remember_last_match = True
+                do_flush = True
                 # Check that previous match has same keyword and arg name
-                do_not_remember_last_match = False
-                skip_flush = False
                 if last_match.group(1) == match.group(1) and last_match.group(3) == match.group(3):
-                    #print('same params! kw={}, arg={}'.format(match.group(1), match.group(3)))
                     # Yep, same as previous!
-                    # Check that a number is a next after the last match
-                    if int(last_match.group(4)) + cur_cnt + 1 == int(match.group(4)):
-                        cur_cnt += 1                        # Just increment next expected arg number
-                        snippet = snippet[match.end():]
-                        #print('stripping snippet={}'.format(repr(snippet)))
-                        do_not_match = True
+                    # Check that a matched number is a next after the last match
+                    if int(last_match.group(4)) + arg_num + 1 == int(match.group(4)):
+                        arg_num += 1                        # Just increment next expected arg number
+                        snippet = snippet[match.end():]     # Remove matched part from the input
+                        do_match = False
                         match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
                         if snippet[0] == ',' and match and match.start() == 2:
-                            skip_flush = True
-                            #print('... will continue: cur_cnt={}'.format(cur_cnt))
+                            do_flush = False
                         else:
-                            do_not_remember_last_match = True
-                            #print('... end of params? cur_cnt={}'.format(cur_cnt))
-                if not skip_flush:
+                            do_remember_last_match = False
+                if do_flush:
                     # Sequence of numbers is over! Flush the output!
-                    #print('flushing: cur_cnt={}'.format(repr(cur_cnt)))
-                    result += delim + SnippetSanitizer._format_matched_params(last_match, cur_cnt)
-                    #print('temp result={}'.format(repr(result)))
-                    if not do_not_remember_last_match:
-                        snippet = snippet[match.end():]     # Strip matched text from the input
+                    result += delim + SnippetSanitizer._format_matched_params(last_match, arg_num)
+                    if do_remember_last_match:
+                        snippet = snippet[match.end():]     # Strip just matched text from the input
                         last_match = match                  # Remember this match for future
                         delim = ', '
                     else:
                         last_match = None
                         delim = ''
-                    cur_cnt = 0
+                    arg_num = 0
             else:
-                assert(not cur_cnt)
+                assert(not arg_num)
                 # Ok, first match!
                 last_match = match                          # Remember for future use
                 result += snippet[:match.start()]           # Append everything before a match to the result
                 snippet = snippet[match.end():]             # Strip leading string from the input snippet
-                #print('setting initial result={}'.format(repr(result)))
-                #print('setting initial snippet={}'.format(repr(snippet)))
                 if snippet[0] != ',':
-                    result += (match.group(1) if match.group(1) else '') + match.group(3) + match.group(4)
-                    #print('do not looks like params... append match to result: {}'.format(repr(result)))
+                    result += (match.group(1) if match.group(1) else '') \
+                      + match.group(3) + match.group(4)
                     last_match = None
                 else:
-                    do_not_match = True
+                    do_match = False
                     match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
                     if match and match.start() != 2:
-                        result += (last_match.group(1) if last_match.group(1) else '') + last_match.group(3) + last_match.group(4)
-                        #print('do not looks like params2... append match to result: {}'.format(repr(result)))
+                        result += (last_match.group(1) if last_match.group(1) else '') \
+                          + last_match.group(3) + last_match.group(4)
                         last_match = None
 
-            if not do_not_match:
+            if do_match:
                 # Try to find again (more)...
                 match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
 
         # If there was no matches at all...
-        #print('---[final]-----------')
         if not has_at_least_one_match:
-            result = snippet                                # Set result to original snippet
+            result = snippet                                # Set result to the original snippet
         else:
             if last_match is not None:
-                #print('cur_cnt={}'.format(repr(cur_cnt)))
-                result += delim + SnippetSanitizer._format_matched_params(last_match, cur_cnt) + snippet
+                result += delim + SnippetSanitizer._format_matched_params(last_match, arg_num) + snippet
             else:
-                #print('append tail snippet: "{}"'.format(snippet))
                 result += snippet
-        #print('---[final result: {}'.format(repr(result)))
         return result
 
 
