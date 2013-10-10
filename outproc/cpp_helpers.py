@@ -331,8 +331,8 @@ class SimpleCppLexer(object):
 
 _BOOST_VARIANT_DETAILS_SNTZ_RE = re.compile('(T[0-9_]+)( = boost::detail::variant::void_);( T[0-9_]+\\2;)* (T[0-9_]+)\\2(;)?')
 _BOOST_TAIL_OF_SOME_DETAILS_SNTZ_RE = re.compile('(, (boost::detail::variant::void_|mpl_::na))*>')
-_GENERATED_TEMPLATE_PARAMS_SNTZ_RE = re.compile('(class|typename) ([A-Z])([0-9]+),( \\1 \\2[0-9]+,)* \\1 \\2([0-9]+)')
-_GENERATED_TEMPLATE_PARAMS_INST_SNTZ_RE = re.compile('([A-Z])([0-9]+),( \\1[0-9]+,)* \\1([0-9]+)')
+_GENERATED_TEMPLATE_PARAMS_SNTZ_RE = re.compile('((class|typename) +)?([A-Z][A-Za-z]*)([0-9]+)')
+_GENERATED_FUNCTION_PARAMS_SNTZ_RE = re.compile('([A-Z][A-Za-z]*)([0-9]+)( [A-Za-z]+)(\\2)')
 _STD_PLACEHOLDER = 'std::_Placeholder<'
 _STD_PLACEHOLDERS_NS = 'std::placeholders::_'
 _PARAMETER_PACK = ' ...'
@@ -364,39 +364,111 @@ class SnippetSanitizer(object):
         return re.sub(_BOOST_TAIL_OF_SOME_DETAILS_SNTZ_RE, '>', snippet)
 
 
+    def _format_matched_params(match, counter):
+        #print('  fmt: counter={}'.format(repr(counter)))
+        #print('  fmt: match={}'.format(repr(match.groups())))
+        kw = (match.group(1) if match.group(1) else '')
+        result = kw + match.group(3) + match.group(4)
+        if 1 < counter:
+            result += ', ..., ' + kw + match.group(3) + str(int(match.group(4)) + counter)
+        if counter == 1:
+            result += ', ' + kw + match.group(3) + str(int(match.group(4)) + counter)
+        #print('  fmt: result={}'.format(repr(result)))
+        return result
+
+
     def _generated_template_params_cleaner(snippet):
         '''
             `class Tn, ..., class Tm' template parameters
         '''
         match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
-        if match:
-            snippet = snippet[:match.start()] \
-                + '{} {}{}, ..., {} {}{}'.format(
-                    match.group(1)
-                  , match.group(2)
-                  , match.group(3)
-                  , match.group(1)
-                  , match.group(2)
-                  , match.group(5)
-                  ) \
-                + snippet[match.end():]
-        return snippet
-
-
-    def _generated_template_params_inst_cleaner(snippet):
-        ''' - `Tn, ..., Tm' template parameters '''
-        match = _GENERATED_TEMPLATE_PARAMS_INST_SNTZ_RE.search(snippet)
+        has_at_least_one_match = False
+        last_match = None
+        cur_cnt = 0
+        result = ''
+        #it = 0
+        delim = ''
         while match:
-            snippet = snippet[:match.start()] \
-                + '{}{}, ..., {}{}'.format(
-                    match.group(1)
-                  , match.group(2)
-                  , match.group(1)
-                  , match.group(4)
-                  ) \
-                + snippet[match.end():]
-            match = _GENERATED_TEMPLATE_PARAMS_INST_SNTZ_RE.search(snippet)
-        return snippet
+            #it+=1
+            #print('---[{}----------'.format(repr(it)))
+            has_at_least_one_match = True
+            latest_match_pos = match.end()
+            #print('snippet={}'.format(repr(snippet)))
+            #print('result={}'.format(repr(result)))
+            #print('start={}, match.groups()={}'.format(match.start(), repr(match.groups())))
+            # Ok, smth found! Is there a prevous match?
+            do_not_match = False
+            if last_match:
+                #print('last_match.groups()={}'.format(repr(last_match.groups())))
+                # Check that previous match has same keyword and arg name
+                do_not_remember_last_match = False
+                skip_flush = False
+                if last_match.group(1) == match.group(1) and last_match.group(3) == match.group(3):
+                    #print('same params! kw={}, arg={}'.format(match.group(1), match.group(3)))
+                    # Yep, same as previous!
+                    # Check that a number is a next after the last match
+                    if int(last_match.group(4)) + cur_cnt + 1 == int(match.group(4)):
+                        cur_cnt += 1                        # Just increment next expected arg number
+                        snippet = snippet[match.end():]
+                        #print('stripping snippet={}'.format(repr(snippet)))
+                        do_not_match = True
+                        match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
+                        if snippet[0] == ',' and match and match.start() == 2:
+                            skip_flush = True
+                            #print('... will continue: cur_cnt={}'.format(cur_cnt))
+                        else:
+                            do_not_remember_last_match = True
+                            #print('... end of params? cur_cnt={}'.format(cur_cnt))
+                if not skip_flush:
+                    # Sequence of numbers is over! Flush the output!
+                    #print('flushing: cur_cnt={}'.format(repr(cur_cnt)))
+                    result += delim + SnippetSanitizer._format_matched_params(last_match, cur_cnt)
+                    #print('temp result={}'.format(repr(result)))
+                    if not do_not_remember_last_match:
+                        snippet = snippet[match.end():]     # Strip matched text from the input
+                        last_match = match                  # Remember this match for future
+                        delim = ', '
+                    else:
+                        last_match = None
+                        delim = ''
+                    cur_cnt = 0
+            else:
+                assert(not cur_cnt)
+                # Ok, first match!
+                last_match = match                          # Remember for future use
+                result += snippet[:match.start()]           # Append everything before a match to the result
+                snippet = snippet[match.end():]             # Strip leading string from the input snippet
+                #print('setting initial result={}'.format(repr(result)))
+                #print('setting initial snippet={}'.format(repr(snippet)))
+                if snippet[0] != ',':
+                    result += (match.group(1) if match.group(1) else '') + match.group(3) + match.group(4)
+                    #print('do not looks like params... append match to result: {}'.format(repr(result)))
+                    last_match = None
+                else:
+                    do_not_match = True
+                    match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
+                    if match and match.start() != 2:
+                        result += (last_match.group(1) if last_match.group(1) else '') + last_match.group(3) + last_match.group(4)
+                        #print('do not looks like params2... append match to result: {}'.format(repr(result)))
+                        last_match = None
+
+            if not do_not_match:
+                # Try to find again (more)...
+                match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
+
+        # If there was no matches at all...
+        #print('---[final]-----------')
+        if not has_at_least_one_match:
+            result = snippet                                # Set result to original snippet
+        else:
+            if last_match is not None:
+                #print('cur_cnt={}'.format(repr(cur_cnt)))
+                result += delim + SnippetSanitizer._format_matched_params(last_match, cur_cnt) + snippet
+            else:
+                #print('append tail snippet: "{}"'.format(snippet))
+                result += snippet
+        #print('---[final result: {}'.format(repr(result)))
+        return result
 
 
     def _template_decl_fixer_1(snippet):
@@ -451,7 +523,6 @@ class SnippetSanitizer(object):
         _boost_variant_details_cleaner
       , _boost_remove_tail_of_some_details
       , _generated_template_params_cleaner
-      , _generated_template_params_inst_cleaner
       , _template_decl_fixer_1
       , _parameters_pack_fixer
       , _hide_some_std_details

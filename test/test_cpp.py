@@ -202,3 +202,81 @@ class CppSanitizerTester(unittest.TestCase):
         line = 'std::vector<std::pair<int, std::list<std::basic_string<char16_t> > > >'
         result = SnippetSanitizer.cleanup_snippet(line)
         self.assertEqual(result, 'std::vector<std::pair<int, std::list<std::basic_string<char16_t>>>>')
+
+
+    def test_7(self):
+        line = 'template <class A1>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, line)
+
+
+    def test_8(self):
+        line = 'template <class A1, class A2>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, line)
+
+
+    def test_9(self):
+        line = 'template <class A1, class A2, class A3>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'template <class A1, ..., class A3>')
+
+
+    def test_10(self):
+        line = 'template <class A1, class A2, class A3, class A5>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'template <class A1, ..., class A3, class A5>')
+
+
+    def test_11(self):
+        line = 'template <class A1, class A2, class A3, class A5, class A6, class A7>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'template <class A1, ..., class A3, class A5, ..., class A7>')
+
+
+    def test_12(self):
+        line = 'Foo<A1, A2, A3>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'Foo<A1, ..., A3>')
+
+
+    def test_13(self):
+        line = 'template <class A1, class A2, class A3> class Foo<A1, A2, A3>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'template <class A1, ..., class A3> class Foo<A1, ..., A3>')
+
+
+    def test_14(self):
+        line = 'template <class A1, class A2, class A3, class B>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'template <class A1, ..., class A3, class B>')
+
+
+    def test_15(self):
+        line = 'template <class A1, class A2, class A3, class B> class Foo<A1, A2, A3, B>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'template <class A1, ..., class A3, class B> class Foo<A1, ..., A3, B>')
+
+
+    def test_16(self):
+        line = 'template <class F, class A1, class A2> boost::_bi::bind_t<boost::_bi::unspecified, F, typename boost::_bi::list_av_2<A1, A2>::type> boost::bind(F, A1, A2)'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, line)
+
+
+    def test_17(self):
+        line = 'template <class A1, class M, class T> boost::_bi::bind_t<typename boost::_bi::dm_result<M T::*, A1>::type, boost::_mfi::dm<M, T>, typename boost::_bi::list_av_1<A1>::type> boost::bind(M T::*, A1)'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, line)
+
+
+    def test_18(self):
+        line = 'template <class A1, class A2, class A3, class B1, class C6, class C7, class C8>'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'template <class A1, ..., class A3, class B1, class C6, ..., class C8>')
+
+
+    def test_19(self):
+        line = 'foo(A1 a1)'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'foo(A1 a1)')
