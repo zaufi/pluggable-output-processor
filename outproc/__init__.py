@@ -30,7 +30,7 @@ SYSCONFDIR = '/etc/outproc'
 
 log = None
 try:
-    import portage.outputz
+    import portage.output
     log = portage.output.EOutput()
 except ImportError:
     class FakeLogger(object):

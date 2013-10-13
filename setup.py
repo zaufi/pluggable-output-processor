@@ -17,15 +17,24 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import distutils.core
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+
 import sys
 
 VERSION = '0.7'
+
+def readfile(filename):
+    with open(filename) as f:
+        return f.read()
 
 distutils.core.setup(
     name             = 'outproc'
   , version          = VERSION
   , description      = 'Pluggable Output Processor'
+  , long_description = readfile('README.md')
   , maintainer       = 'Alex Turbov'
   , maintainer_email = 'I.zaufi@gmail.com'
   , url              = 'http://zaufi.github.io/pluggable-output-processor.html'
@@ -35,16 +44,17 @@ distutils.core.setup(
   , data_files       = [
         ('/etc/outproc', ['conf/cmake.conf', 'conf/gcc.conf', 'conf/make.conf', 'conf/mount.conf'])
       ]
-  , license          = 'GPL-3'
+  , license          = 'GNU General Public License v3 or later (GPLv3+)'
   , classifiers      = [
         'Development Status :: 4 - Beta'
       , 'Environment :: Console'
       , 'Intended Audience :: Developers'
-      , 'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
+      , 'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)'
       , 'Natural Language :: English'
       , 'Operating System :: POSIX :: Linux'
-      , 'Programming Language :: Python'
       , 'Programming Language :: Python :: 3'
       , 'Topic :: Utilities'
       ]
+  , install_requires = ['argparse', 'setuptools', 'termcolor']
+  , tests_require = ['termcolor']
   )

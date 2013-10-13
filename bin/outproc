@@ -22,7 +22,6 @@
 import argparse
 import fcntl
 import os
-import portage.output
 import sys
 import select
 import subprocess
