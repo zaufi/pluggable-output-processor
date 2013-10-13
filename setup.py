@@ -30,7 +30,7 @@ def readfile(filename):
     with open(filename) as f:
         return f.read()
 
-distutils.core.setup(
+setup(
     name             = 'outproc'
   , version          = VERSION
   , description      = 'Pluggable Output Processor'
