@@ -20,13 +20,16 @@
 import distutils.core
 import sys
 
+VERSION = '0.7'
+
 distutils.core.setup(
     name             = 'outproc'
-  , version          = '0.6'
+  , version          = VERSION
   , description      = 'Pluggable Output Processor'
   , maintainer       = 'Alex Turbov'
   , maintainer_email = 'I.zaufi@gmail.com'
-  , url              = 'https://github.com/zaufi/pluggable-output-processor'
+  , url              = 'http://zaufi.github.io/pluggable-output-processor.html'
+  , download_url     = 'https://github.com/zaufi/pluggable-output-processor/archive/version-{}.tar.gz'.format(VERSION)
   , packages         = ['outproc', 'outproc.pp']
   , scripts          = ['bin/outproc']
   , data_files       = [
