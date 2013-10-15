@@ -26,15 +26,18 @@ Easy!
     $ cd outproc-X.Y
     $ sudo easy_install .
 
-For Gentoo users there is a [live ebuild](https://github.com/zaufi/zaufi-overlay/blob/master/dev-util/pluggable-output-processor/pluggable-output-processor-scm.ebuild)
-in my [repository](https://github.com/zaufi/zaufi-overlay/). Also (for Gentoo users again ;-)
-`eselect` module from `contrib/` will be installed by the ebuild. Users of other distros have to
-make a symlinks to required modules manually:
+For Gentoo users there is a [live ebuild][raw-ebuild] in my [repository][my-overlay]. 
+Also (for Gentoo users again ;-) `eselect` module from `contrib/` will be installed by the ebuild. 
+Users of other distros have to make a symlinks to required modules manually:
 
     $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/<module-name>
 
 and then make sure `/usr/lib/outproc/bin` placed __before__ `/usr/bin` (and anything else) in your 
-user/system `PATH` environment.
+user/system `PATH` environment. For example, to install the `gcc` module do the following:
+
+    $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/gcc
+
+Then you may edit `/etc/outproc/gcc.conf` to adjust color settings.
 
 
 TODO
@@ -50,3 +53,12 @@ TODO
 * <del>`eselect` module to manage tools under control</del> DONE
 * ask module is it want to handle a current command or we can do `execv` instead
 * implement `STDIN` reader (pipe mode)
+* handle `KeyboardInterrupt` and hide Python crap
+* `ctest` module to colorize test results
+
+
+See also
+========
+
+[raw-ebuld]: https://github.com/zaufi/zaufi-overlay/blob/master/dev-util/pluggable-output-processor/pluggable-output-processor-scm.ebuild
+[my-overlay]: https://github.com/zaufi/zaufi-overlay/ "My ebuilds overlay"
