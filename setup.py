@@ -24,7 +24,7 @@ except ImportError:
 
 import sys
 
-VERSION = '0.7'
+VERSION = '0.7.1'
 
 def readfile(filename):
     with open(filename) as f:
