@@ -33,11 +33,12 @@ Users of other distros have to make a symlinks to required modules manually:
     $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/<module-name>
 
 and then make sure `/usr/lib/outproc/bin` placed __before__ `/usr/bin` (and anything else) in your 
-user/system `PATH` environment. For example, to install the `gcc` module do the following:
+user/system `PATH` environment. Available modules (plugins) can be found at `<python-site-packages-dir>/outproc/pp`.
+For example, to install the `gcc` module do the following:
 
     $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/gcc
 
-Then you may edit `/etc/outproc/gcc.conf` to adjust color settings.
+Then you may edit `/etc/outproc/gcc.conf` to adjust color settings. 
 
 
 TODO
