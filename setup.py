@@ -22,8 +22,6 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import sys
-
 VERSION = '0.7.1'
 
 def readfile(filename):
@@ -56,5 +54,6 @@ setup(
       , 'Topic :: Utilities'
       ]
   , install_requires = ['argparse', 'setuptools', 'termcolor']
-  , tests_require = ['termcolor']
+  , test_suite       = 'test'
+  , tests_require    = ['termcolor']
   )
