@@ -30,7 +30,7 @@ from outproc.cpp_helpers import SimpleCppLexer, SnippetSanitizer
 
 _LOCATION_RE = re.compile('([^ :]+?):([0-9]+(,|:[0-9]+[:,]?)?)?')
 # /tmp/ccUlKMZA.o:zz.cc:function main: error: undefined reference to 'boost::iostreams::zlib::default_strategy'
-_LINK_ERROR_RE = re.compile(':function (.*): error: ')
+_LINK_ERROR_RE = re.compile(':function (vtable for )?(.*): error: ')
 _SKIPPING_WARN = re.compile('\[ skipping [0-9]+ instantiation contexts[^\]]+\]')
 _WITH_LIST_START = ' [with '
 
@@ -251,7 +251,7 @@ class Processor(outproc.Processor):
         # Trying various error messages
         match = _LINK_ERROR_RE.search(line)
         if match:
-            return self._handle_link_error(line, match.group(1))
+            return self._handle_link_error(line, match.group(2))
         idx = line.find(' error: ')
         if idx != -1:
             return self._handle_error(line, idx)
