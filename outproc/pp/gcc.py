@@ -208,6 +208,11 @@ class Processor(outproc.Processor):
         return self._handle_error(line, idx + len(code))
 
 
+    def _handle_link_notice(self, line):
+        line = self._try_colorize_location(line, self.notice)
+        return line + self.config.color.reset
+
+
     def _handle_error(self, line, start_at):
         #line = self._inject_color_at(line, self.error, start_at)
         line = self._try_colorize_location(line, self.error)
@@ -280,6 +285,9 @@ class Processor(outproc.Processor):
           or line.find('At global scope:') != -1
         if is_look_like_notice:
             return self._handle_notice(line)
+        # Handle link notice
+        if line.endswith(' previous definition here'):
+            return self._handle_link_notice(line)
 
         # There are possible a bunch of messages started w/ 'note:'
         # some of them contains just an informational text, the others
