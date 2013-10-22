@@ -45,6 +45,13 @@ class Processor(outproc.Processor):
         return color + line + self.config.color.reset
 
 
+    def looks_like_cmake_line(self, line):
+        return _SUCCESS_RE.match(line) \
+          or _SUCCESS2_RE.match(line)  \
+          or _FAILURE_RE.match(line)   \
+          or _FATAL_RE.match(line)
+
+
     def handle_line(self, line):
         move_code = ''
         if self.prev_line is not None and line.startswith(self.prev_line):

@@ -22,7 +22,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = '0.7.1'
+VERSION = '0.8'
 
 def readfile(filename):
     with open(filename) as f:

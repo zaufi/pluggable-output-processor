@@ -250,6 +250,8 @@ class Processor(outproc.Processor):
         idx = line.find(' error: ')
         if idx != -1:
             return self._handle_error(line, idx)
+        if line.startswith('compilation terminated.'):
+            return self.error + line + self.config.color.reset
 
         # Trying some warning messages
         idx = line.find(' warning: ')

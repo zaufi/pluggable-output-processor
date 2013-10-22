@@ -25,6 +25,8 @@ import re
 import shlex
 import sys
 
+import outproc.pp.cmake
+
 _KNOWN_COMPILERS = ['c++', 'g++', 'gcc']
 
 _MAKE_MGS_RE = re.compile('make(\[[0-9]+\])?: ')
@@ -58,6 +60,7 @@ class Processor(outproc.Processor):
         self.target_arch = config.get_color('compiler-option-m', 'magenta')
         self.warning = config.get_color('compiler-option-W', 'yellow+bold')
         self.lib_paths = config.get_color('compiler-option-L', 'green')
+        self.cmake_processor = outproc.pp.cmake.Processor(config, binary)
 
 
     def _detect_make_message(self, line):
@@ -165,6 +168,8 @@ class Processor(outproc.Processor):
         # (it is also a not interested information)
         elif line.startswith('/usr/bin/cmake'):
             return self._colorize_with_misc(line)
+        elif self.cmake_processor.looks_like_cmake_line(line):
+            return self.cmake_processor.handle_line(line)
         else:
             is_compiler_cmd_line, args, first_compiler_option_idx = self._is_look_like_cmake_compile(line)
             last_find_idx = 0
