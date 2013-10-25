@@ -78,7 +78,7 @@ class Processor(object):
 
     def eof(self):
         if self.read_buffer:
-            return [self.handle_line(self.read_buffer)]
+            return [self.handle_line(self.read_buffer.decode('utf-8'))]
 
     @staticmethod
     def config_file_name(module_name):
