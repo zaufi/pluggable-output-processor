@@ -42,6 +42,8 @@ class Processor(outproc.Processor):
         # 0) `menuconfig` target is not specified in command line (when linux kernel get compiled)
         # 1) we are connected to a real terminal or force flag set in the current environment
         result = 'menuconfig' not in sys.argv \
+          and 'oldconfig' not in sys.argv \
+          and 'nconfig' not in sys.argv \
           and (sys.stdout.isatty() or outproc.force_processing_requested())
         if result:
             outproc.force_processing()
