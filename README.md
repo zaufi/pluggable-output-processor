@@ -56,7 +56,11 @@ TODO
 * implement `STDIN` reader (pipe mode)
 * handle `KeyboardInterrupt` and hide Python crap
 * `ctest` module to colorize test results
+* handle as note:  
 
+    /usr/include/python3.3/pyconfig.h:1397:0: warning: "_XOPEN_SOURCE" redefined [enabled by default]
+    #define _XOPEN_SOURCE 700
+    <command-line>:0:0: note: this is the location of the previous definition
 
 See also
 ========
