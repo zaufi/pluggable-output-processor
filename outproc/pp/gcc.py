@@ -243,6 +243,10 @@ class Processor(outproc.Processor):
 
 
     def handle_line(self, line):
+        # Do not even try to handle empty lines
+        if (not len(line.strip())):
+            return line
+
         # Replace "couldn't" --> "could not" to avoid char literal ambiguity
         line = line.replace("couldn't", "could not")
 
