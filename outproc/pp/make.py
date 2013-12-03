@@ -44,6 +44,7 @@ class Processor(outproc.Processor):
         result = 'menuconfig' not in sys.argv \
           and 'oldconfig' not in sys.argv \
           and 'nconfig' not in sys.argv \
+          and 'edit_cache' not in sys.argv \
           and (sys.stdout.isatty() or outproc.force_processing_requested())
         if result:
             outproc.force_processing()
