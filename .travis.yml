@@ -4,5 +4,5 @@ python:
   - "3.2"
   - "3.3"
 
-script: ./setup.py test
+script: python setup.py test
 
