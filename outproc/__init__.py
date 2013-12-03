@@ -25,6 +25,8 @@ import traceback
 # Inject nested module into the scope
 from outproc.config import Config
 
+# Set PEP396 version attribute
+__version__ = '0.9'
 
 SYSCONFDIR = '/etc/outproc'
 

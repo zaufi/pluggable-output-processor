@@ -22,7 +22,8 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = '0.8'
+import outproc
+
 
 def readfile(filename):
     with open(filename) as f:
@@ -30,13 +31,13 @@ def readfile(filename):
 
 setup(
     name             = 'outproc'
-  , version          = VERSION
+  , version          = outproc.__version__
   , description      = 'Pluggable Output Processor'
   , long_description = readfile('README.md')
   , maintainer       = 'Alex Turbov'
   , maintainer_email = 'I.zaufi@gmail.com'
   , url              = 'http://zaufi.github.io/pluggable-output-processor.html'
-  , download_url     = 'https://github.com/zaufi/pluggable-output-processor/archive/version-{}.tar.gz'.format(VERSION)
+  , download_url     = 'https://github.com/zaufi/pluggable-output-processor/archive/version-{}.tar.gz'.format(outproc.__version__)
   , packages         = ['outproc', 'outproc.pp']
   , scripts          = ['bin/outproc']
   , data_files       = [
