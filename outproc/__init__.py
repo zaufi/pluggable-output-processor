@@ -26,7 +26,7 @@ import traceback
 from outproc.config import Config
 
 # Set PEP396 version attribute
-__version__ = '0.9'
+__version__ = '0.10'
 
 SYSCONFDIR = '/etc/outproc'
 
@@ -96,6 +96,7 @@ def force_processing():
 
 
 def force_processing_requested():
+    # TODO Handle conversion errors. Better to have a smth like `interpret_string_as_bool(value)`
     return _FORCE_PROCESSING_ENV in os.environ and int(os.environ[_FORCE_PROCESSING_ENV])
 
 

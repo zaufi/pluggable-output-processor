@@ -41,7 +41,7 @@ setup(
   , packages         = ['outproc', 'outproc.pp']
   , scripts          = ['bin/outproc']
   , data_files       = [
-        ('/etc/outproc', ['conf/cmake.conf', 'conf/gcc.conf', 'conf/make.conf', 'conf/mount.conf'])
+        ('/etc/outproc', ['conf/cmake.conf', 'conf/diff.conf', 'conf/gcc.conf', 'conf/make.conf', 'conf/mount.conf'])
       ]
   , license          = 'GNU General Public License v3 or later (GPLv3+)'
   , classifiers      = [
