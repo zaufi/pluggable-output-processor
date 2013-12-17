@@ -20,11 +20,13 @@
 #
 
 import collections
+import functools
 import os
 import outproc
 import outproc.term
 import re
 import shlex
+import sys
 
 from outproc.cpp_helpers import SimpleCppLexer, SnippetSanitizer
 
@@ -33,6 +35,7 @@ _LOCATION_RE = re.compile('([^ :]+?):([0-9]+(,|:[0-9]+[:,]?)?)?')
 _LINK_ERROR_RE = re.compile(':function (vtable for )?(.*): error: ')
 _SKIPPING_WARN = re.compile('\[ skipping [0-9]+ instantiation contexts[^\]]+\]')
 _WITH_LIST_START = ' [with '
+_DEPENDECY_GENERATION_OPTIONS = ['-M', '-MM', '-MF', '-MG', '-MP', '-MT', '-MQ', '-MD', '-MMD']
 
 # Introduce a named tuple class
 Range = collections.namedtuple('Range', ['start', 'end'])
@@ -300,12 +303,12 @@ class Processor(outproc.Processor):
         # than this:
         note_index = line.find(' note: ')
         if note_index != -1:
-            is_look_like_notice = line.endswith('suggested alternatives:')               \
-              or line.endswith('suggested alternative:')                                 \
-              or line.endswith('candidate is:')                                          \
-              or line.endswith('candidates are:')                                        \
-              or line.endswith('invalid template non-type parameter')                    \
-              or line.endswith('template argument deduction/substitution failed:')       \
+            is_look_like_notice = line.endswith('suggested alternatives:')         \
+              or line.endswith('suggested alternative:')                           \
+              or line.endswith('candidate is:')                                    \
+              or line.endswith('candidates are:')                                  \
+              or line.endswith('invalid template non-type parameter')              \
+              or line.endswith('template argument deduction/substitution failed:') \
               or line.endswith(' provided')
             if is_look_like_notice:
                 return self._handle_notice(line)
@@ -316,29 +319,33 @@ class Processor(outproc.Processor):
 
         # All standalong code snippets (AFAIK) starts w/ at least one space...
         pos = line.find('^')
-        if pos == -1 and line[0] == ' ':
-            assert(self.prev_line is None)
-            self.prev_line = line
-            return None
+        if pos == -1:
+            if line[0] == ' ':
+                assert(self.prev_line is None)
+                self.prev_line = line
+                return None
+            else:
+                self.prev_line = line
+                return line
 
-        if pos != -1:
-            assert(self.prev_line is not None)
-            # Check if caret points after the end of a previous line.
-            # For example:
-            # /tmp/nn.cc:2:21: fatal error: iostreamz: No such file or directory
-            # #include <iostreamz>
-            #                     ^
-            if len(self.prev_line) <= pos:
-                # Append spaces to it! So pos_to_offset() will find a requested
-                # position after line gets colorized...
-                self.prev_line += ' ' * (pos - len(self.prev_line) + 1)
-            line = self.code + self._handle_code_fragment(self.prev_line, True) + self.config.color.reset
+        assert(self.prev_line is not None)
+        # Check if caret points after the end of a previous line.
+        # For example:
+        # /tmp/nn.cc:2:21: fatal error: iostreamz: No such file or directory
+        # #include <iostreamz>
+        #                     ^
+        if len(self.prev_line) <= pos:
+            # Append spaces to it! So pos_to_offset() will find a requested
+            # position after line gets colorized...
+            self.prev_line += ' ' * (pos - len(self.prev_line) + 1)
+        line = self.code + self._handle_code_fragment(self.prev_line, True) + self.config.color.reset
 
-            # Find a cursor position for a transformed line
-            pos = outproc.term.pos_to_offset(line, pos)
-            line = line[:pos] + self.code_cursor + line[pos:pos+1] + self.config.color.normal_bg \
-              + line[pos+1:] + ('\n' if self.nl else '')
-            self.prev_line = None
+        # Find a cursor position for a transformed line
+        pos = outproc.term.pos_to_offset(line, pos)
+        line = line[:pos] + \
+          self.code_cursor + line[pos:pos+1] + self.config.color.normal_bg \
+          + line[pos+1:] + ('\n' if self.nl else '')
+        self.prev_line = None
 
         # Return unmodified line if nothing has matched
         return line
@@ -347,3 +354,16 @@ class Processor(outproc.Processor):
     @staticmethod
     def config_file_name(module_name):
         return 'gcc.conf'
+
+    @staticmethod
+    def want_to_handle_current_command():
+        # Try to handle an output if:
+        # 0) gcc is not used to produce a dependencies for GNU make
+        # 1) what else?
+        result = outproc.Processor.want_to_handle_current_command() \
+          and not functools.reduce(
+              lambda state, item: state or item in _DEPENDECY_GENERATION_OPTIONS
+            , sys.argv
+            , False
+            )
+        return result
