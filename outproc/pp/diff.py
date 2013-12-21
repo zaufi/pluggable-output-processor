@@ -29,12 +29,22 @@ import sys
 class Processor(outproc.Processor):
 
     @staticmethod
+    def _remove_color_options():
+        if '--color=always' in sys.argv:
+            del sys.argv[sys.argv.index('--color=always')]
+        if '--color=no' in sys.argv:
+            del sys.argv[sys.argv.index('--color=no')]
+
+    @staticmethod
     def want_to_handle_current_command():
         result = False
         if '--color=always' in sys.argv:
             outproc.force_processing()
-            del sys.argv[sys.argv.index('--color=always')]
+            Processor._remove_color_options()
             result = True
+        elif '--color=no' in sys.argv:
+            Processor._remove_color_options()
+            result = False
         elif sys.stdout.isatty() or outproc.force_processing_requested():
             result = True
         return result
