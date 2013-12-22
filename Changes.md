@@ -5,6 +5,7 @@ Version 0.10
 ------------
 
 * `diff` module added (capable to handle unified mode only nowadays)
+* improve `gcc` module a little
 
 
 Version 0.9
