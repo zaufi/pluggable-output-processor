@@ -10,5 +10,5 @@ recursive-include outproc *.py
 recursive-exclude outproc __pycache__
 
 recursive-include test *.py
-recursive-include test/fixtures *
+recursive-include test/data *
 recursive-exclude . __pycache__
