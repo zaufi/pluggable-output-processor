@@ -83,3 +83,39 @@ class ComplierCmdLineMatchTester(unittest.TestCase):
         #print('{}'.format(repr(line)))
         #print('{}'.format(line))
 
+
+    def _format_range_as_to_columns(self, count, columns):
+        result = ''
+        line = ''
+        for i in outproc.term.column_formatter(count, columns):
+            if i == -1:
+                #print(line)
+                result += line + '\n'
+                line = ''
+            else:
+                line += '{} '.format(i)
+        return result
+
+
+    def test_column_formatter_0(self):
+        for i in outproc.term.column_formatter(0, 1):
+            self.assertFalse()
+
+
+    def test_column_formatter_1_2(self):
+        expected = '0 \n'
+        result = self._format_range_as_to_columns(1, 2)
+        self.assertMultiLineEqual(expected, result)
+
+
+    def test_column_formatter_10_4(self):
+        expected = '0 3 6 9 \n1 4 7 \n2 5 8 \n'
+        result = self._format_range_as_to_columns(10, 4)
+        self.assertMultiLineEqual(expected, result)
+
+
+    def test_column_formatter_10_3(self):
+        expected = '0 4 8 \n1 5 9 \n2 6 \n3 7 \n'
+        result = self._format_range_as_to_columns(10, 3)
+        self.assertMultiLineEqual(expected, result)
+

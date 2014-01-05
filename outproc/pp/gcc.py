@@ -27,15 +27,19 @@ import outproc.term
 import re
 import shlex
 import sys
+import textwrap
 
 from outproc.cpp_helpers import SimpleCppLexer, SnippetSanitizer
+
 
 _LOCATION_RE = re.compile('([^ :]+?):([0-9]+(,|:[0-9]+[:,]?)?)?')
 # /tmp/ccUlKMZA.o:zz.cc:function main: error: undefined reference to 'boost::iostreams::zlib::default_strategy'
 _LINK_ERROR_RE = re.compile(':function (vtable for )?(.*): error: ')
 _SKIPPING_WARN = re.compile('\[ skipping [0-9]+ instantiation contexts[^\]]+\]')
 _WITH_LIST_START = ' [with '
-_DEPENDECY_GENERATION_OPTIONS = ['-M', '-MM', '-MF', '-MG', '-MP', '-MT', '-MQ', '-MD', '-MMD']
+_HELP_LINE = re.compile('^\s+(?P<option>-\S*)(?:\s+(?P<text>.*)|$)?')
+# Do-Not-Handle options
+_DNH_OPTIONS = ['-M', '-MM', '-MF', '-MG', '-MP', '-MT', '-MQ', '-MD', '-MMD', '--help']
 
 # Introduce a named tuple class
 Range = collections.namedtuple('Range', ['start', 'end'])
@@ -61,8 +65,12 @@ class Processor(outproc.Processor):
         self.code_number = config.get_color('code-numeric-literal', 'blue+bold')
         self.code_string = config.get_color('code-string-literal', 'magenta')
         self.code_comment = config.get_color('code-comment', 'grey+bold')
+        self.enabled_option = config.get_color('enabled-option', 'green+bold')
+        self.disabled_option = config.get_color('disabled-option', 'red+bold')
+        self.neutral_option = config.get_color('neutral-option', 'white')
         self.code_cursor = outproc.term.fg2bg(config.get_color('code-cursor', 'red', with_reset=False))
         self.nl = config.get_bool('new-line-after-code', True)
+
 
     def _inject_color_at(self, line, color, pos):
         return line[:pos] + color + line[pos:]
@@ -244,13 +252,13 @@ class Processor(outproc.Processor):
           + self.config.color.reset
         return self._try_colorize_location(line, self.notice)
 
-
-    def handle_line(self, line):
+    def _handle_compile_line(self, line):
         # Do not even try to handle empty lines
         if (not len(line.strip())):
             return line
 
         # Replace "couldn't" --> "could not" to avoid char literal ambiguity
+        # TODO Anything else? "don't" --> "do not"? (unit tests are required)
         line = line.replace("couldn't", "could not")
 
         # Categorize message first...
@@ -351,9 +359,107 @@ class Processor(outproc.Processor):
         return line
 
 
+    def _handle_help_line(self, line):
+        if len(line) == 0 or self.end_of_options:
+            self.end_of_options = True
+            self.tail_lines.append(line)
+            return None
+
+        match = _HELP_LINE.search(line)
+        if self.just_help_requested:
+            if match:
+                text = match.group('text')
+                option = match.group('option')
+                self.max_option_width = max(len(option) + 2, self.max_option_width)
+                self.help_options.append((option, None, text))
+            else:
+                option = self.help_options[-1]
+                self.help_options[-1] = (option[0], None, option[2] + ' ' + line.strip())
+        else:
+            if match:
+                text = match.group('text')
+                option = match.group('option')
+                state = None
+                if text == '[disabled]':
+                    state = False
+                    text = ''
+                elif text == '[enabled]':
+                    state = True
+                    text = ''
+                else:
+                    option += text
+                # NOTE '+2' for spaces between options to avoid possible columns clash
+                self.max_option_width = max(len(option) + 2, self.max_option_width)
+                self.help_options.append((option, state, text))
+        return None
+
+
+    def _handle_help_screen_eof(self):
+        term_width = outproc.term.get_width()
+        text_size = term_width - self.max_option_width - 2
+        fmt = '  {{:<{}}}{{}}'.format(self.max_option_width)
+
+        lines = []
+        for option in self.help_options:
+            text = textwrap.wrap(option[2], text_size, subsequent_indent=(' ' * (self.max_option_width + 2)))
+            lines.append(
+                fmt.format(option[0], '\n'.join(text))
+              )
+
+        return lines + self.tail_lines
+
+
+    def _handle_query_screen_eof(self):
+        assert(0 < self.max_option_width)
+        term_width = outproc.term.get_width()
+        columns = int(term_width / (self.max_option_width + 2))
+        cell_width = int(term_width / columns)
+        fmt = '{{:<{}}}'.format(cell_width)
+
+        lines = []
+        line = ''
+        for i in outproc.term.column_formatter(len(self.help_options), columns):
+            if i == -1:
+                lines.append(line)
+                line = ''
+            else:
+                option = self.help_options[i]
+                if option[1] is not None:
+                    color = self.enabled_option if option[1] else self.disabled_option
+                else:
+                    color = self.neutral_option
+                opt_str = fmt.format(option[0])
+                pos = opt_str.find(' ')
+                opt_str = color + opt_str[0:pos] + self.config.color.reset + opt_str[pos:]
+                line += opt_str
+
+        return lines + self.tail_lines
+
+
+    def handle_line(self, line):
+        # Check if '--help=<smth>' was called,
+        # then the very first line will contains this text:
+        if line.startswith('The following options '):
+            self.handle_line = self._handle_help_line
+            self.just_help_requested = '-Q' not in sys.argv
+            self.help_options = []
+            self.tail_lines = []
+            self.max_option_width = 0
+            self.end_of_options = False
+            if self.just_help_requested:
+                self.eof = self._handle_help_screen_eof
+            else:
+                self.eof = self._handle_query_screen_eof
+            return line
+        # Otherwise, set normal handler
+        self.handle_line = self._handle_compile_line
+        return self._handle_compile_line(line)
+
+
     @staticmethod
     def config_file_name(module_name):
         return 'gcc.conf'
+
 
     @staticmethod
     def want_to_handle_current_command():
@@ -362,7 +468,7 @@ class Processor(outproc.Processor):
         # 1) what else?
         result = outproc.Processor.want_to_handle_current_command() \
           and not functools.reduce(
-              lambda state, item: state or item in _DEPENDECY_GENERATION_OPTIONS
+              lambda state, item: state or item in _DNH_OPTIONS
             , sys.argv
             , False
             )

@@ -5,7 +5,8 @@ Version 0.10
 ------------
 
 * `diff` module added (capable to handle unified mode only nowadays)
-* improve `gcc` module a little
+* improve `gcc` module: handle `--help=<smth>` commands (w/ `-Q` as well) +
+  few internal enhacements
 
 
 Version 0.9

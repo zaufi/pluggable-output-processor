@@ -48,10 +48,10 @@ TODO
 * unit tests for tokenizer
 * test files w/ to cause various error messages from gcc (+ unit test for colorizer somehow)
 * continue to improve `cmake` support (+ unit tests)
-* <del>turn `mount` output into a human readable look-n-feel</del> DONE
+* <del>turn `mount` output into a human readable look-n-feel</del> Done!
 * colorize `df` depending on free space threshold
-* colorize `diff` (easy! :-)
-* <del>`eselect` module to manage tools under control</del> DONE
+* colorize `diff` (easy! :-) -- Done for `-u` mode
+* <del>`eselect` module to manage tools under control</del> Done!
 * ask module is it want to handle a current command or we can do `execv` instead
 * implement `STDIN` reader (pipe mode)
 * handle `KeyboardInterrupt` and hide Python crap
@@ -61,6 +61,8 @@ TODO
         /usr/include/python3.3/pyconfig.h:1397:0: warning: "_XOPEN_SOURCE" redefined [enabled by default]
         #define _XOPEN_SOURCE 700
         <command-line>:0:0: note: this is the location of the previous definition
+* handle `make[1]: warning:`
+* <del>handle `gcc -Q --help=<smth>`</del> Done!
 
 See also
 ========

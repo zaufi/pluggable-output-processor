@@ -82,3 +82,13 @@ def fg2bg(color):
         color = color[:match.start() + 1] + '4' + color[match.start() + 2:]
     return color
 
+
+def column_formatter(items_count, columns):
+    ''' Generator yelding indices up to `items_count` in a way
+        like *nix shells columnize lists
+    '''
+    rows = int(items_count / columns) + int(bool(items_count % columns))
+    for row in range(0, rows):
+        for idx in range(row, items_count, rows):
+            yield idx
+        yield -1
