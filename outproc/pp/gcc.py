@@ -37,7 +37,7 @@ _LOCATION_RE = re.compile('([^ :]+?):([0-9]+(,|:[0-9]+[:,]?)?)?')
 _LINK_ERROR_RE = re.compile(':function (vtable for )?(.*): error: ')
 _SKIPPING_WARN = re.compile('\[ skipping [0-9]+ instantiation contexts[^\]]+\]')
 _WITH_LIST_START = ' [with '
-_HELP_LINE = re.compile('^\s+(?P<option>-\S*)(?:\s+(?P<text>.*)|$)?')
+_HELP_LINE = re.compile('^  (?P<option>-\S*)(?:\s+(?P<text>.*)|$)?')
 # Do-Not-Handle options
 _DNH_OPTIONS = ['-M', '-MM', '-MF', '-MG', '-MP', '-MT', '-MQ', '-MD', '-MMD', '--help']
 
@@ -401,10 +401,15 @@ class Processor(outproc.Processor):
 
         lines = []
         for option in self.help_options:
-            text = textwrap.wrap(option[2], text_size, subsequent_indent=(' ' * (self.max_option_width + 2)))
-            lines.append(
-                fmt.format(option[0], '\n'.join(text))
-              )
+            if option[2]:
+                text = textwrap.wrap(
+                    option[2]
+                  , text_size
+                  , subsequent_indent=(' ' * (self.max_option_width + 2))
+                  )
+            else:
+                text = ''
+            lines.append(fmt.format(option[0], '\n'.join(text)))
 
         return lines + self.tail_lines
 
