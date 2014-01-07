@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import codecs
+
 try:
     from setuptools import setup
 except ImportError:
@@ -26,7 +28,7 @@ import outproc
 
 
 def readfile(filename):
-    with open(filename, encoding='UTF-8') as f:
+    with codecs.open(filename, encoding='UTF-8') as f:
         return f.read()
 
 setup(
