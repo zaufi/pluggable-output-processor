@@ -288,6 +288,7 @@ class Processor(outproc.Processor):
         is_look_like_notice = line.find(' In instantiation of') != -1 \
           or line.find(' In function') != -1                          \
           or line.find(' In member function') != -1                   \
+          or line.find(' In lambda function') != -1                   \
           or line.find(' In static member function ') != -1           \
           or line.find(' In substitution of ') != -1                  \
           or line.find(' In constructor ') != -1                      \
