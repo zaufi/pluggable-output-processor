@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Unit tests for `make` post-processor gcc command line matching regex
 #
