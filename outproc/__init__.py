@@ -32,7 +32,7 @@ __version__ = '0.11'
 
 SYSCONFDIR = '/etc/outproc'
 
-\log = None
+log = None
 try:
     import portage.output
     log = portage.output.EOutput()
