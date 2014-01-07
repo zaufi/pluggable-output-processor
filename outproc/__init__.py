@@ -22,6 +22,8 @@ import os
 import sys
 import traceback
 
+from __future__ import print_function
+
 # Inject nested module into the scope
 from .config import Config
 
@@ -30,7 +32,7 @@ __version__ = '0.11'
 
 SYSCONFDIR = '/etc/outproc'
 
-log = None
+\log = None
 try:
     import portage.output
     log = portage.output.EOutput()
