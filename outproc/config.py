@@ -174,7 +174,7 @@ class Config(object):
                         result += ';38;5;' + c
                 except ValueError:
                     raise RuntimeError(
-                        'Invalid value of key `{}`: expected color specification "{}" [{}]'.
+                        'Invalid value of key `{}`: expected color specification, got "{}" [{}]'.
                         format(key, c, self.filename)
                       )
         assert(result[0] == ';')
