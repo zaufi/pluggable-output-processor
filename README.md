@@ -73,4 +73,4 @@ See also
 [![Downloads](https://pypip.in/d/outproc/badge.png)](https://pypi.python.org/pypi/outproc)
 [![Downloads](https://pypip.in/v/outproc/badge.png)](https://pypi.python.org/pypi/outproc)
 [![Build Status](https://api.travis-ci.org/zaufi/pluggable-output-processor.png?branch=master)](https://travis-ci.org/zaufi/pluggable-output-processor)
-
+[![Requirements Status](https://requires.io/github/zaufi/pluggable-output-processor/requirements.png?branch=master)](https://requires.io/github/zaufi/pluggable-output-processor/requirements/?branch=master)
