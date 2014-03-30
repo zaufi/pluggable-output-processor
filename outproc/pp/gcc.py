@@ -225,6 +225,9 @@ class Processor(outproc.Processor):
 
     def _handle_error(self, line, start_at):
         #line = self._inject_color_at(line, self.error, start_at)
+        # Try to remove redundand '#error' from text
+        if line.index('error: #error ') != -1:
+            line = line.replace('error: #error ', 'error: ')
         line = self._try_colorize_location(line, self.error)
         line = self._try_line_with_quoted_code(line, self.error)
         return line + self.config.color.reset
@@ -232,6 +235,9 @@ class Processor(outproc.Processor):
 
     def _handle_warning(self, line, start_at):
         #line = self._inject_color_at(line, self.warning, start_at)
+        # Try to remove redundand '#warning' from text
+        if line.index('warning: #warning ') != -1:
+            line = line.replace('warning: #warning ', 'warning: ')
         line = self._try_colorize_location(line, self.warning)
         line = self._try_line_with_quoted_code(line, self.warning)
         return line + self.config.color.reset
@@ -291,6 +297,7 @@ class Processor(outproc.Processor):
           or line.find(' In static member function ') != -1           \
           or line.find(' In substitution of ') != -1                  \
           or line.find(' In constructor ') != -1                      \
+          or line.find(' In copy constructor ') != -1                 \
           or line.find(' In destructor ') != -1                       \
           or line.find('In file included from ') != -1                \
           or line.find('                 from ') != -1                \
