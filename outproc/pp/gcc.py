@@ -226,7 +226,7 @@ class Processor(outproc.Processor):
     def _handle_error(self, line, start_at):
         #line = self._inject_color_at(line, self.error, start_at)
         # Try to remove redundand '#error' from text
-        if line.index('error: #error ') != -1:
+        if line.find('error: #error ') != -1:
             line = line.replace('error: #error ', 'error: ')
         line = self._try_colorize_location(line, self.error)
         line = self._try_line_with_quoted_code(line, self.error)
@@ -236,7 +236,7 @@ class Processor(outproc.Processor):
     def _handle_warning(self, line, start_at):
         #line = self._inject_color_at(line, self.warning, start_at)
         # Try to remove redundand '#warning' from text
-        if line.index('warning: #warning ') != -1:
+        if line.find('warning: #warning ') != -1:
             line = line.replace('warning: #warning ', 'warning: ')
         line = self._try_colorize_location(line, self.warning)
         line = self._try_line_with_quoted_code(line, self.warning)
