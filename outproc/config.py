@@ -30,7 +30,8 @@ class Config(object):
         This class can read and give an access to that data in a easy to use way.
     '''
 
-    _RGB_COLOR_SPEC_RE = re.compile('rgb\s*\(\s*([0-5])\s*,\s*([0-5])\s*,\s*([0-5])\s*\)')
+    _RGB_COLOR_SPEC_RE = re.compile('rgb\s*\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)')
+    _RGB_HEX_COLOR_SPEC_RE = re.compile('rgb\s*\(\s*([0-9]{6})\s*\)')
     _GRAYSCALE_SPEC_RE = re.compile('gray\s*\(\s*([0-9]+)\s*\)')
 
     def __init__(self, filename):
@@ -126,19 +127,23 @@ class Config(object):
         if 'none' in colors:
             return result
 
-        need_reset = with_reset
+        if with_reset:
+            result = '\x1b[0m'
+
         for c in colors:
+            #
+            result += '\x1b['
+            #
             if c == 'reset':
-                result += ';0'
-                need_reset = False
+                result += '0'
             elif c == 'normal':
-                result += ';38'
+                result += '38'
             elif c in termcolor.COLORS:
-                result += ';' + str(termcolor.COLORS[c])
+                result += str(termcolor.COLORS[c])
             elif c in termcolor.ATTRIBUTES:
-                result += ';' + str(termcolor.ATTRIBUTES[c])
+                result += str(termcolor.ATTRIBUTES[c])
             elif c in termcolor.HIGHLIGHTS:
-                result += ';' + str(termcolor.HIGHLIGHTS[c])
+                result += str(termcolor.HIGHLIGHTS[c])
             elif self._RGB_COLOR_SPEC_RE.match(c):
                 # BUG Fucking Python! Why not to assign and check a variable inside of `if`
                 # TODO Avoid double regex match
@@ -147,8 +152,11 @@ class Config(object):
                     r = self._validate_rgb_component(int(match.group(1)))
                     g = self._validate_rgb_component(int(match.group(2)))
                     b = self._validate_rgb_component(int(match.group(3)))
-                    index = self._rgb_to_index(r, g, b)
-                    result += ';38;5;' + str(index)
+                    if r <= 5 and g <= 5 and b <= 5:
+                        index = self._rgb_to_index(r, g, b)
+                        result += '38;5;' + str(index)
+                    else:
+                        result += '38;2;{};{};{}'.format(r, g, b)
                 except ValueError:
                     raise RuntimeError(
                         'Invalid value of key `{}`: invalid RGB color specification "{}" [{}]'.
@@ -161,7 +169,7 @@ class Config(object):
                 try:
                     g = self._validate_grayscale(int(match.group(1)))
                     index = self._grayscale_to_index(g)
-                    result += ';38;5;' + str(index)
+                    result += '38;5;' + str(index)
                 except ValueError:
                     raise RuntimeError(
                         'Invalid value of key `{}`: invalid grayscale color specification "{}" [{}]'.
@@ -171,19 +179,20 @@ class Config(object):
                 try:
                     index = int(c)
                     if 15 < index and index < 256:
-                        result += ';38;5;' + c
+                        result += '38;5;' + c
                 except ValueError:
                     raise RuntimeError(
                         'Invalid value of key `{}`: expected color specification, got "{}" [{}]'.
                         format(key, c, self.filename)
                       )
-        assert(result[0] == ';')
-        return '\x1b[' + ('0' + result if need_reset else result[1:]) + 'm'
+            # Form the partial result
+            result += 'm'
+        return result
 
 
     def _validate_rgb_component(self, c):
         assert(isinstance(c, int))
-        if c < 0 or 5 < c:
+        if c < 0 or 255 < c:
             raise ValueError('RGB component is out of range')
         return c
 

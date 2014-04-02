@@ -49,7 +49,6 @@ def pos_to_offset(line, requested_pos):
         escape sequences.
 
         TODO Consider other than color ESC sequences
-        TODO Unit tests for this crap!
     '''
     assert(isinstance(line, str) and isinstance(requested_pos, int) and requested_pos < len(line))
     inside_esc_seq = False

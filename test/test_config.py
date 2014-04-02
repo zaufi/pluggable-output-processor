@@ -49,17 +49,20 @@ class ConfigTester(unittest.TestCase):
 
     def test_get_color_value(self):
         cfg = outproc.Config(self.data_file('sample.conf'))
-        self.assertEqual(cfg.get_color('red', 'red'), '\x1b[0;31m')
+        self.assertEqual(cfg.get_color('red', 'red'), '\x1b[0m\x1b[31m')
         self.assertEqual(cfg.get_color('red', 'red', with_reset=False), '\x1b[31m')
-        self.assertEqual(cfg.get_color('error', 'normal'), '\x1b[0;31;1m')
-        self.assertEqual(cfg.get_color('error', 'normal',with_reset=False), '\x1b[31;1m')
-        self.assertEqual(cfg.get_color('not-existed', 'normal'), '\x1b[0;38m')
-        self.assertEqual(cfg.get_color('some-int', 'reset'), '\x1b[0;38;5;123m')
+        self.assertEqual(cfg.get_color('error', 'normal'), '\x1b[0m\x1b[31m\x1b[1m')
+        self.assertEqual(cfg.get_color('error', 'normal',with_reset=False), '\x1b[31m\x1b[1m')
+        self.assertEqual(cfg.get_color('not-existed', 'normal'), '\x1b[0m\x1b[38m')
+        self.assertEqual(cfg.get_color('some-int', 'reset'), '\x1b[0m\x1b[38;5;123m')
         self.assertEqual(cfg.get_color('none', 'none'), '')
         #self.assertEqual(cfg.get_color('invalid-color', 'red'), '\x1b[0;31m')
+        # Try TrueColor specs
+        self.assertEqual(cfg.get_color('true_rgb_red', 'red'), '\x1b[0m\x1b[38;2;255;0;0m')
+        self.assertEqual(cfg.get_color('true_rgb_green', 'red'), '\x1b[0m\x1b[38;2;0;255;0m')
+        self.assertEqual(cfg.get_color('true_rgb_blue', 'red'), '\x1b[0m\x1b[38;2;0;0;255m')
         with self.assertRaises(TypeError):
             cfg.get_color('red')
-
 
 
     def test_get_bool_value(self):

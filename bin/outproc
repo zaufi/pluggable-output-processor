@@ -90,9 +90,24 @@ class Application(object):
 
 
     def _load_config(self, config_file_name):
+        # Try user config file first
+        config_file_name_full = None
+        if 'HOME' in os.environ:
+            config_file_name_full = os.path.join(
+                os.path.join(os.environ['HOME'], '.outproc')
+              , config_file_name
+              )
+            # If no user config, then will try a system-wide
+            if not os.path.exists(config_file_name_full):
+                config_file_name_full = None
+
+        # Set full config file name to the system-wide if still not inilialized
+        if config_file_name_full is None:
+            config_file_name_full = os.path.join(outproc.SYSCONFDIR, config_file_name)
+
         # Try to load configuration for selected plugin
         try:
-            return outproc.Config(os.path.join(outproc.SYSCONFDIR, config_file_name))
+            return outproc.Config(config_file_name_full)
         except:
             outproc.report_error_with_backtrace('Unable to load configuration data')
             sys.exit(1)

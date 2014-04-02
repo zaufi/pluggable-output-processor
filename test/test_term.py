@@ -32,15 +32,15 @@ class ComplierCmdLineMatchTester(unittest.TestCase):
         #print('{}'.format(repr(colored)))
 
         pos = outproc.term.pos_to_offset(colored, 0)
-        self.assertEqual(pos, 9)
+        self.assertEqual(pos, 13)
         self.assertEqual(colored[pos], 'H')
 
         pos = outproc.term.pos_to_offset(colored, 6)
-        self.assertEqual(pos, 15)
+        self.assertEqual(pos, 19)
         self.assertEqual(colored[pos], 'A')
 
         pos = outproc.term.pos_to_offset(colored, len(line) - 1)
-        self.assertEqual(pos, 20)
+        self.assertEqual(pos, 24)
         self.assertEqual(colored[pos], 'a')
 
 
@@ -49,7 +49,7 @@ class ComplierCmdLineMatchTester(unittest.TestCase):
         colored = self.white_fg + ' ' + self.yellow_fg + line + self.config.color.reset
         #print('{}'.format(repr(colored)))
         pos = outproc.term.pos_to_offset(colored, 1)
-        self.assertEqual(pos, 17)
+        self.assertEqual(pos, 23)
         self.assertEqual(colored[pos], 'H')
 
 
@@ -62,7 +62,7 @@ class ComplierCmdLineMatchTester(unittest.TestCase):
         self.assertEqual(line[pos], 'H')
         line = line[:pos] + self.reg_bg + line[pos:pos+1] + self.config.color.normal_bg \
           + line[pos+1:]
-        self.assertEqual(line, '\x1b[0;33;1m\x1b[41mH\x1b[48mello Africa\x1b[0m')
+        self.assertEqual(line, '\x1b[0m\x1b[33m\x1b[1m\x1b[41mH\x1b[48mello Africa\x1b[0m')
         #print('{}'.format(repr(line)))
         #print('{}'.format(line))
 
@@ -70,7 +70,7 @@ class ComplierCmdLineMatchTester(unittest.TestCase):
         self.assertEqual(line[pos], 'A')
         line = line[:pos] + self.reg_bg + line[pos:pos+1] + self.config.color.normal_bg \
           + line[pos+1:]
-        self.assertEqual(line, '\x1b[0;33;1m\x1b[41mH\x1b[48mello \x1b[41mA\x1b[48mfrica\x1b[0m')
+        self.assertEqual(line, '\x1b[0m\x1b[33m\x1b[1m\x1b[41mH\x1b[48mello \x1b[41mA\x1b[48mfrica\x1b[0m')
         #print('{}'.format(repr(line)))
         #print('{}'.format(line))
 
@@ -78,7 +78,7 @@ class ComplierCmdLineMatchTester(unittest.TestCase):
         self.assertEqual(line[pos], 'a')
         line = line[:pos] + self.reg_bg + line[pos:pos+1] + self.config.color.normal_bg \
           + line[pos+1:]
-        self.assertEqual(line, '\x1b[0;33;1m\x1b[41mH\x1b[48mello \x1b[41mA\x1b[48mfric\x1b[41ma\x1b[48m\x1b[0m')
+        self.assertEqual(line, '\x1b[0m\x1b[33m\x1b[1m\x1b[41mH\x1b[48mello \x1b[41mA\x1b[48mfric\x1b[41ma\x1b[48m\x1b[0m')
         #print('{}'.format(repr(line)))
         #print('{}'.format(line))
 
