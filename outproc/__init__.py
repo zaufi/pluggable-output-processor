@@ -25,7 +25,7 @@ import traceback
 from .config import Config
 
 # Set PEP396 version attribute
-__version__ = '0.11'
+__version__ = '0.14'
 
 SYSCONFDIR = '/etc/outproc'
 

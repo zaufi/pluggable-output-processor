@@ -1,6 +1,18 @@
 Changes
 =======
 
+Version 0.14
+------------
+
+* few improvements in gcc colorizer
+* user may have his own configs in `~/.outproc/` to override system-wide
+  settings from `/etc/outproc/`
+* support for true (16M) color terminals has been added! Now it is possible to
+  specify `rgb(R,G,B)`, where components are numbers `0 <= N <= 255`.
+  If all components are less than `6`, then `rgb` treated as (old) 256 color
+  palette. Tested and work fine with KDE `konsole`.
+
+
 Version 0.10
 ------------
 
