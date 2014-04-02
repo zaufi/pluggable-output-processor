@@ -63,6 +63,7 @@ TODO
         <command-line>:0:0: note: this is the location of the previous definition
 * handle `make[1]: warning:`
 * <del>handle `gcc -Q --help=<smth>`</del> Done!
+* support for TrueColor terminals (`konsole` for example)
 
 See also
 ========
