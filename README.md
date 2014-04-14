@@ -44,26 +44,26 @@ Then you may edit `/etc/outproc/gcc.conf` to adjust color settings.
 TODO
 ====
 
-* continue to improve C++ tokenizer (few things can be better)
-* unit tests for tokenizer
-* test files w/ to cause various error messages from gcc (+ unit test for colorizer somehow)
-* continue to improve `cmake` support (+ unit tests)
-* <del>turn `mount` output into a human readable look-n-feel</del> Done!
-* colorize `df` depending on free space threshold
-* colorize `diff` (easy! :-) -- Done for `-u` mode
-* <del>`eselect` module to manage tools under control</del> Done!
-* ask module is it want to handle a current command or we can do `execv` instead
-* implement `STDIN` reader (pipe mode)
-* handle `KeyboardInterrupt` and hide Python crap
-* `ctest` module to colorize test results
-* handle as note:  
+- [ ] continue to improve C++ tokenizer (few things can be better)
+- [ ] unit tests for tokenizer
+- [ ] test files w/ to cause various error messages from gcc (+ unit test for colorizer somehow)
+- [ ] continue to improve `cmake` support (+ unit tests)
+- [x] turn `mount` output into a human readable look-n-feel
+- [ ] colorize `df` depending on free space threshold
+- [ ] colorize `diff` (easy! :-) -- Done for `-u` mode
+- [x] `eselect` module to manage tools under control
+- [ ] ask module is it want to handle a current command or we can do `execv` instead
+- [ ] implement `STDIN` reader (pipe mode)
+- [ ] handle `KeyboardInterrupt` and hide Python crap
+- [ ] `ctest` module to colorize test results
+- [ ] handle as note:
 
         /usr/include/python3.3/pyconfig.h:1397:0: warning: "_XOPEN_SOURCE" redefined [enabled by default]
         #define _XOPEN_SOURCE 700
         <command-line>:0:0: note: this is the location of the previous definition
-* handle `make[1]: warning:`
-* <del>handle `gcc -Q --help=<smth>`</del> Done!
-* <del>support for TrueColor terminals (`konsole` for example)</del>
+- [x] handle `make[1]: warning:`
+- [x] handle `gcc -Q --help=<smth>`
+- [x] support for TrueColor terminals (`konsole` for example)
 
 See also
 ========
