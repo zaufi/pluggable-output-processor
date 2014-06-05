@@ -279,3 +279,9 @@ class CppSanitizerTester(unittest.TestCase):
         line = 'foo(A1 a1)'
         result = SnippetSanitizer.cleanup_snippet(line)
         self.assertEqual(result, 'foo(A1 a1)')
+
+
+    def test_20(self):
+        line = 'Int64'
+        result = SnippetSanitizer.cleanup_snippet(line)
+        self.assertEqual(result, 'Int64')

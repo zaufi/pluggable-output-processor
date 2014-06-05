@@ -331,7 +331,6 @@ class SimpleCppLexer(object):
 _BOOST_VARIANT_DETAILS_SNTZ_RE = re.compile('(T[0-9_]+)( = boost::detail::variant::void_);( T[0-9_]+\\2;)* (T[0-9_]+)\\2(;)?')
 _BOOST_TAIL_OF_SOME_DETAILS_SNTZ_RE = re.compile('(, (boost::detail::variant::void_|mpl_::na))*>')
 _GENERATED_TEMPLATE_PARAMS_SNTZ_RE = re.compile('((class|typename) +)?([A-Z][A-Za-z]*)([0-9]+)')
-_GENERATED_FUNCTION_PARAMS_SNTZ_RE = re.compile('([A-Z][A-Za-z]*)([0-9]+)( [A-Za-z]+)(\\2)')
 _STD_PLACEHOLDER = 'std::_Placeholder<'
 _STD_PLACEHOLDERS_NS = 'std::placeholders::_'
 _PARAMETER_PACK = ' ...'
@@ -421,17 +420,18 @@ class SnippetSanitizer(object):
                 last_match = match                          # Remember for future use
                 result += snippet[:match.start()]           # Append everything before a match to the result
                 snippet = snippet[match.end():]             # Strip leading string from the input snippet
-                if snippet[0] != ',':
-                    result += (match.group(1) if match.group(1) else '') \
-                      + match.group(3) + match.group(4)
-                    last_match = None
-                else:
-                    do_match = False
-                    match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
-                    if match and match.start() != 2:
-                        result += (last_match.group(1) if last_match.group(1) else '') \
-                          + last_match.group(3) + last_match.group(4)
+                if snippet:
+                    if snippet[0] != ',':
+                        result += (match.group(1) if match.group(1) else '') \
+                          + match.group(3) + match.group(4)
                         last_match = None
+                    else:
+                        do_match = False
+                        match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
+                        if match and match.start() != 2:
+                            result += (last_match.group(1) if last_match.group(1) else '') \
+                              + last_match.group(3) + last_match.group(4)
+                            last_match = None
 
             if do_match:
                 # Try to find again (more)...
