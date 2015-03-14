@@ -23,6 +23,8 @@ import outproc
 import outproc.term
 import sys
 
+# TODO Add more?
+KNOWN_NETWORK_FILESYSTEMS = ['nfs']
 
 class Processor(outproc.Processor):
 
@@ -41,6 +43,7 @@ class Processor(outproc.Processor):
         self.mount_point_max_size = config.get_int('mountpoint-max-size', 0)
         self.kernel_fs = config.get_color('kernel-fs', 'grey+bold')
         self.real_fs = config.get_color('real-fs', 'normal')
+        self.net_fs = config.get_color('net-fs', 'blue+bold')
         self.rebind_fs = config.get_color('rebind-fs', 'magenta')
         self.odd_bg = config.get_color('odd-bg', 'normal', with_reset=False)
         if self.odd_bg == config.color.normal:
@@ -92,7 +95,12 @@ class Processor(outproc.Processor):
         last_field_start_column = sum(max_fields) + 3       # 3 == spaces between columns
         for row, r in enumerate(records):
             # Colorize
-            color = self.real_fs if r[0].startswith('/') else self.kernel_fs
+            if r[0].startswith('/'):
+                color = self.real_fs
+            elif r[2] in KNOWN_NETWORK_FILESYSTEMS:
+                color = self.net_fs
+            else:
+                color = self.kernel_fs
             bg_color = self.odd_bg if row % 2 else self.even_bg
             # Format leading 3 columns
             line = fmt.format(r[0], r[1], r[2])
