@@ -304,6 +304,7 @@ class Processor(outproc.Processor):
           or line.find('   required from ') != -1                     \
           or line.find('   recursively required from ') != -1         \
           or line.find('   required by substitution of ') != -1       \
+          or line.find('   recursively required by substitution of ') != -1 \
           or line.find('At global scope:') != -1
         if is_look_like_notice:
             return self._handle_notice(line)
