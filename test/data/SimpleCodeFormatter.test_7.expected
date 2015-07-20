@@ -1,0 +1,7 @@
+typedef boost::mpl::iter_fold<
+    my_vector
+  , test::initial_state<
+        boost::mpl::void_
+      >
+  , test::some_functor
+  > zz;

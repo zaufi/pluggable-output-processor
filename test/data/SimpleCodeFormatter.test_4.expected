@@ -1,0 +1,4 @@
+typedef boost::mpl::iter_fold<
+    my_vector
+  , test::initial_state::not_way_to_split
+  > zz;

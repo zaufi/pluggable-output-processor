@@ -1,0 +1,1 @@
+typedef boost::mpl::iter_fold<my_vector> zz;

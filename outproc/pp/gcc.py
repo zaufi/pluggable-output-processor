@@ -28,9 +28,9 @@ import shlex
 import sys
 import textwrap
 
-from outproc.cpp_helpers import SimpleCppLexer, SnippetSanitizer
+from outproc.cpp_helpers import CodeFormatter, SimpleCppLexer, SnippetSanitizer
 
-
+_TERM_WIDTH = outproc.term.get_size()[0]
 _LOCATION_RE = re.compile('([^ :]+?):([0-9]+(,|:[0-9]+[:,]?)?)?')
 # /tmp/ccUlKMZA.o:zz.cc:function main: error: undefined reference to 'boost::iostreams::zlib::default_strategy'
 _LINK_ERROR_RE = re.compile(':function (vtable for )?(.*): error: ')
@@ -69,6 +69,9 @@ class Processor(outproc.Processor):
         self.neutral_option = config.get_color('neutral-option', 'white')
         self.code_cursor = outproc.term.fg2bg(config.get_color('code-cursor', 'red', with_reset=False))
         self.nl = config.get_bool('new-line-after-code', True)
+
+        self.max_code_snippet_length = config.get_int('max-code-snippet-length', int(_TERM_WIDTH * 2 / 3))
+        self.code_formatter = CodeFormatter(self.max_code_snippet_length)
 
 
     def _inject_color_at(self, line, color, pos):
@@ -131,6 +134,9 @@ class Processor(outproc.Processor):
         pos = snippet.find(_WITH_LIST_START)
         if pos == -1:
             # Handle an ordinal snippet...
+            if not color_only:
+                snippet = self.code_formatter.pretty_format(snippet)
+
             return self.code + self._handle_code_fragment(snippet, color_only) + current_color
 
         # Handle a complex message w/ possible few '[ with ' template argument expansions...

@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import re
 import os
 import termcolor
@@ -330,7 +331,8 @@ class SimpleCppLexer(object):
 
 _BOOST_VARIANT_DETAILS_SNTZ_RE = re.compile('(T[0-9_]+)( = boost::detail::variant::void_);( T[0-9_]+\\2;)* (T[0-9_]+)\\2(;)?')
 _BOOST_TAIL_OF_SOME_DETAILS_SNTZ_RE = re.compile('(, (boost::detail::variant::void_|mpl_::na))*>')
-_GENERATED_TEMPLATE_PARAMS_SNTZ_RE = re.compile('((class|typename) +)?([A-Z][A-Za-z]*)([0-9]+)')
+_GENERATED_TEMPLATE_PARAMS_SNTZ_RE = re.compile('((, )?((class|typename) )?(([A-Z][a-z_]*)([0-9]+)))')
+_STD_DEFAULT_ALLOCATORS_SNTZ_RE = re.compile('std::(deque|(forward_)?list|vector)<(.*), std::allocator<\\3>\s*>')
 _STD_PLACEHOLDER = 'std::_Placeholder<'
 _STD_PLACEHOLDERS_NS = 'std::placeholders::_'
 _PARAMETER_PACK = ' ...'
@@ -362,14 +364,22 @@ class SnippetSanitizer(object):
         return re.sub(_BOOST_TAIL_OF_SOME_DETAILS_SNTZ_RE, '>', snippet)
 
 
-    def _format_matched_params(match, num_args):
-        assert(match)
-        kw = (match.group(1) if match.group(1) else '')
-        result = kw + match.group(3) + match.group(4)
-        if 1 < num_args:
-            result += ', ..., ' + kw + match.group(3) + str(int(match.group(4)) + num_args)
-        if num_args == 1:
-            result += ', ' + kw + match.group(3) + str(int(match.group(4)) + num_args)
+    def _flush_collected_params(stack, start, snippet):
+        assert 0 < len(stack)
+
+        result = ''
+        # Append leading slice
+        result += snippet[start:stack[0].end()]
+
+        if len(stack) == 1:                                 # In case of the only item in stack
+            return result                                   # Nothing to do anymore
+
+        if 2 < len(stack):                                  # If there is more than 2 matches
+            result += ', ...'
+
+        # Append trail slice
+        result += snippet[stack[-1].start():stack[-1].end()]
+
         return result
 
 
@@ -377,75 +387,35 @@ class SnippetSanitizer(object):
         '''
             `class Tn, ..., class Tm' template parameters
         '''
-        last_match = None
-        arg_num = 0
-        delim = ''
+        start = 0
+        stack = []
+        has_at_least_one_match = False
         result = ''
-        match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
-        has_at_least_one_match = bool(match)
-        while match:
-            latest_match_pos = match.end()
-            # Ok, smth found! Is there a previous match?
-            do_match = True
-            if last_match:
-                do_remember_last_match = True
-                do_flush = True
-                # Check that previous match has same keyword and arg name
-                if last_match.group(1) == match.group(1) and last_match.group(3) == match.group(3):
-                    # Yep, same as previous!
-                    # Check that a matched number is a next after the last match
-                    if int(last_match.group(4)) + arg_num + 1 == int(match.group(4)):
-                        arg_num += 1                        # Just increment next expected arg number
-                        snippet = snippet[match.end():]     # Remove matched part from the input
-                        do_match = False
-                        match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
-                        if snippet[0] == ',' and match and match.start() == 2:
-                            do_flush = False
-                        else:
-                            do_remember_last_match = False
-                if do_flush:
-                    # Sequence of numbers is over! Flush the output!
-                    result += delim + SnippetSanitizer._format_matched_params(last_match, arg_num)
-                    if do_remember_last_match:
-                        snippet = snippet[match.end():]     # Strip just matched text from the input
-                        last_match = match                  # Remember this match for future
-                        delim = ', '
-                    else:
-                        last_match = None
-                        delim = ''
-                    arg_num = 0
-            else:
-                assert(not arg_num)
-                # Ok, first match!
-                last_match = match                          # Remember for future use
-                result += snippet[:match.start()]           # Append everything before a match to the result
-                snippet = snippet[match.end():]             # Strip leading string from the input snippet
-                if snippet:
-                    if snippet[0] != ',':
-                        result += (match.group(1) if match.group(1) else '') \
-                          + match.group(3) + match.group(4)
-                        last_match = None
-                    else:
-                        do_match = False
-                        match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
-                        if match and match.start() != 2:
-                            result += (last_match.group(1) if last_match.group(1) else '') \
-                              + last_match.group(3) + last_match.group(4)
-                            last_match = None
+        for match in _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.finditer(snippet):
+            has_at_least_one_match = True
+            # Check if 'flush' required
+            flush_needed = len(stack) \
+                and (\
+                    match.group(4) != stack[-1].group(4) \
+                 or match.group(6) != stack[-1].group(6) \
+                 or (int(match.group(7)) - int(stack[-1].group(7))) != 1 \
+                    )
 
-            if do_match:
-                # Try to find again (more)...
-                match = _GENERATED_TEMPLATE_PARAMS_SNTZ_RE.search(snippet)
+            if not flush_needed:                            # If no flush needed,
+                stack.append(match)                         # just append this item
+                continue                                    # and continue w/ a next match
 
-        # If there was no matches at all...
+            result += SnippetSanitizer._flush_collected_params(stack, start, snippet)
+
+            start = stack[-1].end()
+            stack = [match]
+
         if not has_at_least_one_match:
-            result = snippet                                # Set result to the original snippet
-        else:
-            # Do we have smth matched and not flushed yet?
-            if last_match is not None:
-                result += delim + SnippetSanitizer._format_matched_params(last_match, arg_num) + snippet
-            else:
-                result += snippet
+            return snippet
+
+        result += SnippetSanitizer._flush_collected_params(stack, start, snippet)
+        result += snippet[stack[-1].end():]
+
         return result
 
 
@@ -497,6 +467,23 @@ class SnippetSanitizer(object):
         return snippet
 
 
+    def _remove_defaulted_params_from_std_types(snippet):
+        result = snippet
+        match = _STD_DEFAULT_ALLOCATORS_SNTZ_RE.search(result)
+        has_at_least_one_match = False
+        while match:
+            assert len(match.groups()) == 3
+            has_at_least_one_match = True
+
+            result = result[0:match.start()] + 'std::' + match.group(1) + '<' + match.group(3) + '>' + result[match.end():]
+            match = _STD_DEFAULT_ALLOCATORS_SNTZ_RE.search(result)
+
+        if not has_at_least_one_match:
+            return snippet
+
+        return result
+
+
     _SANITIZERS = [
         _boost_variant_details_cleaner
       , _boost_remove_tail_of_some_details
@@ -506,6 +493,7 @@ class SnippetSanitizer(object):
       , _hide_some_std_details
       , _squeeze_right_angle_brackets
       , _simplify_some_data_types
+      , _remove_defaulted_params_from_std_types
       ]
 
 
@@ -514,3 +502,170 @@ class SnippetSanitizer(object):
         for sanitizer in SnippetSanitizer._SANITIZERS:
             snippet = sanitizer(snippet)
         return snippet
+
+
+RangeItem = collections.namedtuple('RangeItem', ['close_char', 'split_points', 'children'])
+
+class CodeFormatter(object):
+
+    TAB_SIZE = 4
+
+    def __init__(self, max_width):
+        self.max_width = max_width
+
+
+    def pretty_format(self, snippet):
+
+        # NOTE Expand TABs to 4 spaces (just to be sure)
+        snippet = snippet.replace('\t', self.TAB_SIZE * ' ')
+
+        if self.max_width < len(snippet):
+            return '\n'.join(self._format_line(snippet))
+
+        return snippet
+
+
+    def _indent_size(self, level, **kwargs):
+        first = None
+        if 'first' in kwargs:
+            first = bool(kwargs['first'])
+        elif 'first_char' in kwargs:
+            first = kwargs['first_char'] not in ',>)'
+
+        if first is None:
+            first = True
+
+        if first:
+            indent = self.TAB_SIZE * (level)
+        else:
+            if level:
+                indent = self.TAB_SIZE * (level - 1) + int(self.TAB_SIZE / 2)
+            else:
+                indent = int(self.TAB_SIZE / 2)
+        return indent
+
+
+    def _indentation(self, level, **kwargs):
+        return self._indent_size(level, **kwargs) * ' '
+
+
+    def _format_line(self, line):
+
+        #print('\n{}\n'.format(repr(line)))
+
+        prev_char_is_space = False
+        ranges = []
+        stack = []
+
+        # TODO Detect unbalanced brackets?
+        for i, c in enumerate(line):
+            #print('{}: c={}'.format(i, repr(c)))
+
+            if c == ' ':
+                prev_char_is_space = True
+                continue
+
+            prev_char_is_space = False
+
+            if c == '(':
+                stack.append(RangeItem(')', [i + 1], []))
+                #print('{} open={}'.format(repr(i), c))
+
+            elif c == '<' and not prev_char_is_space:
+                stack.append(RangeItem('>', [i + 1], []))
+                #print('{} open={}'.format(repr(i), c))
+
+            elif c == ',':
+                stack[-1].split_points.append(i)
+                #print('{} comma={}'.format(repr(i), c))
+
+            elif 0 < len(stack) and c == stack[-1].close_char:
+                last_item = stack[-1]
+                stack.pop()
+                last_item.split_points.append(i)
+                #print('last_item={}'.format(repr(last_item)))
+                # No need to split anything if range is empty -- i.e. there was nothing between brackets
+                if last_item.split_points[0] != last_item.split_points[-1]:
+                    if 0 < len(stack):
+                        stack[-1].children.append(last_item)
+                    else:
+                        ranges.append(last_item)
+                    #print('{} close={}'.format(repr(i), c))
+
+        assert len(stack) == 0
+
+        # No way has found to format this line
+        if not len(ranges):
+            return [line]
+
+        root = RangeItem(None, [0, len(line)], ranges)
+        #print('Ranges after analyze: {}'.format(repr(root)))
+        #print('')
+
+        result = self._tree_walk_and_slice(root, 0, line)
+        #print('result={}'.format(repr(result)))
+        return result
+
+
+    def _tree_walk_and_slice(self, node, level, line):
+        # Is there any split points?
+        if not len(node.split_points):
+            #print('tw{}: {}no split points -- nothing to do'.format(level, _indentation(level, first=True)))
+            return [line]
+
+        # At least 2 split points expected
+        assert 1 < len(node.split_points)
+
+
+        # Iterate over slices
+        result = []
+        start = node.split_points[0]
+        for pos in node.split_points[1:]:
+            #print('tw{}: {}consider range ({}, {}): "{}"'.format(level, self._indentation(level, first=True), start, pos, line[start:pos]))
+            # Check if current slice can fit into bounds
+            if self.max_width < (pos - start + self._indent_size(level, firstChar=line[start])):
+                # Huh, need to slice current range...
+                #print('tw{}: {}range does not fit: trying subranges'.format(level, self._indentation(level, first=True)))
+                # Is there any child node?
+                if len(node.children):
+                    # Yep, walk through and find a suitable subrange
+                    found = None
+                    found_idx = 0
+                    for found_idx, child in enumerate(node.children):
+                        cstart = child.split_points[0]
+                        for cend in child.split_points[1:]:
+                            if start < cstart and cend < pos:
+                                found = child
+                                #assert (found.level - level) == 1
+                                assert 1 < len(found.split_points)
+                                break
+                        if found is not None:
+                            break
+
+                    if found is not None:
+                        #print('found_idx={}'.format(repr(found_idx)))
+                        #print('tw{}: {}found subrange: {}'.format(level, self._indentation(level, first=True), found))
+                        #print('tw{}: {}append leading subrange ({}, {}): "{}"'.format(level, self._indentation(level, first=True), start, found.split_points[0], line[start:found.split_points[0]]))
+                        result.append(self._indentation(level, first_char=line[start]) + line[start:found.split_points[0]])
+                        result += self._tree_walk_and_slice(found, level + 1, line)
+
+                        #print('tw{}: {}form a trail recursively ({}, {}): "{}"'.format(level, self._indentation(level, first=True), found.split_points[-1], pos, line[found.split_points[-1]:pos]))
+                        new_start = found.split_points[-1]
+                        new_end = pos
+                        new_level = level + 1#int(line[new_start] not in ',>)')
+                        result += self._tree_walk_and_slice(RangeItem(None, [new_start, new_end], node.children[found_idx + 1:]), new_level, line)
+                        #result.append(self._indentation(level + 1, first_char=line[]) + line[found.split_points[-1]:pos])
+                    else:
+                        result.append(self._indentation(level, first_char=line[start]) + line[start:pos])
+                else:
+                    # We can do nothing if there is nothing to split by...
+                    result.append(self._indentation(level, first_char=line[start]) + line[start:pos])
+                    #print('tw{}: {}no children'.format(level, self._indentation(level, first=True)))
+            else:
+                # Yes, it can
+                result.append(self._indentation(level, first_char=line[start]) + line[start:pos])
+                #print('tw{}: {}range fits well'.format(level, self._indentation(level, first=True)))
+
+            start = pos
+
+        return result

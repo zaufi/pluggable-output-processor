@@ -17,9 +17,12 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fcntl
 import os
 import re
+import struct
 import sys
+import termios
 
 _FG_COLOR_IN_ESC_SEQ_RE = re.compile('([^\d])3(\d)')
 
@@ -90,3 +93,29 @@ def column_formatter(items_count, columns):
         for idx in range(row, items_count, rows):
             yield idx
         yield -1
+
+
+def _ioctl_GWINSZ(fd):
+    try:
+        cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+    except:
+        return
+    return cr
+
+
+def get_size():
+
+    cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)
+
+    if not cr:
+        try:
+            fd = os.open(os.ctermid(), os.O_RDONLY)
+            cr = _ioctl_GWINSZ(fd)
+            os.close(fd)
+        except:
+            pass
+
+    if not cr:
+        cr = (os.environ.get('LINES', 25), os.environ.get('COLUMNS', 80))
+
+    return int(cr[1]), int(cr[0])

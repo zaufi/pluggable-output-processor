@@ -1,0 +1,10 @@
+typedef iter_fold<
+    my_vector
+  , vector<mpl::_>
+  , push_back<
+        mpl::_
+      , add_pointer<
+            mpl::_
+          >
+      >
+  > zz;
