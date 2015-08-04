@@ -551,7 +551,7 @@ class CodeFormatter(object):
 
     def _format_line(self, line):
 
-        #print('\n{}\n'.format(repr(line)))
+        #print('\nline="{}"\n'.format(repr(line)))
 
         prev_char_is_space = False
         ranges = []
@@ -575,7 +575,7 @@ class CodeFormatter(object):
                 stack.append(RangeItem('>', [i + 1], []))
                 #print('{} open={}'.format(repr(i), c))
 
-            elif c == ',':
+            elif 0 < len(stack) and c == ',':
                 stack[-1].split_points.append(i)
                 #print('{} comma={}'.format(repr(i), c))
 
