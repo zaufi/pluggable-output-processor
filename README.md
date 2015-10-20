@@ -64,6 +64,7 @@ TODO
 * handle `make[1]: warning:`
 * <del>handle `gcc -Q --help=<smth>`</del> Done!
 * <del>support for TrueColor terminals (`konsole` for example)</del>
+* failure to display error on line w/ C++ operator^()
 
 See also
 ========

@@ -558,6 +558,7 @@ class CodeFormatter(object):
         stack = []
 
         # TODO Detect unbalanced brackets?
+        # TODO Detect operator<<
         for i, c in enumerate(line):
             #print('{}: c={}'.format(i, repr(c)))
 
@@ -592,10 +593,8 @@ class CodeFormatter(object):
                         ranges.append(last_item)
                     #print('{} close={}'.format(repr(i), c))
 
-        assert len(stack) == 0
-
-        # No way has found to format this line
-        if not len(ranges):
+        # No way has found to format this line or unbalanced brackets
+        if not len(ranges) or len(stack) != 0:
             return [line]
 
         root = RangeItem(None, [0, len(line)], ranges)
