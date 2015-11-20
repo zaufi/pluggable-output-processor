@@ -37,6 +37,7 @@ class Processor(outproc.Processor):
         self.success = config.get_color('success-test', 'green+bold')
         self.failure = config.get_color('fail-test', 'red+bold')
         self.fatal = config.get_color('fatal-error', 'red+bold')
+        self.relaxed = config.get_bool('dash-dash-is-cmake', True)
         self.prev_line = None
 
 
@@ -45,7 +46,8 @@ class Processor(outproc.Processor):
 
 
     def looks_like_cmake_line(self, line):
-        return _SUCCESS_RE.match(line) \
+        return self.relaxed and line.startswith('-- ') \
+          or _SUCCESS_RE.match(line) \
           or _SUCCESS2_RE.match(line)  \
           or _FAILURE_RE.match(line)   \
           or _FATAL_RE.match(line)
