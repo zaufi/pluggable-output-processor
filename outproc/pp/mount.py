@@ -72,7 +72,7 @@ class Processor(outproc.Processor):
         for line in block.decode('utf-8').splitlines():
             columns = line.split(' ')
             # TODO ATTENTION Other locales will cause assertion fail
-            assert(columns[1] == 'on' and columns[3] == 'type')
+            assert columns[1] == 'on' and columns[3] == 'type'
             # TODO Unit tests for this piece of crap!
             if 0 < self.mount_point_max_size and self.mount_point_max_size < len(columns[2]):
                 size = 0
