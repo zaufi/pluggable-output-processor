@@ -56,9 +56,13 @@ class Processor(outproc.Processor):
         else:
             self.even_bg = outproc.term.fg2bg(self.even_bg)
 
+        self.max_fields = (0, 0, 0)
+        self.records = []
+        self.reminder = None
+
 
     def _update_max_lengths(self, current, record):
-        assert(len(record) == 4 and len(current) == 3)
+        assert len(record) == 4 and len(current) == 3
         return (
             max(current[0], len(record[0]))
           , max(current[1], len(record[1]))
@@ -67,10 +71,15 @@ class Processor(outproc.Processor):
 
 
     def handle_block(self, block):
-        records = []
-        max_fields = (0, 0, 0)
-        for line in block.decode('utf-8').splitlines():
-            columns = line.split(' ')
+        if self.reminder is not None:
+            block = self.reminder + block
+
+        for line in block.splitlines():
+            if block.endswith(line):
+                self.reminder = line
+                break
+
+            columns = line.decode('utf-8').split(' ')
             # TODO ATTENTION Other locales will cause assertion fail
             assert columns[1] == 'on' and columns[3] == 'type'
             # TODO Unit tests for this piece of crap!
@@ -83,17 +92,20 @@ class Processor(outproc.Processor):
                 truncate_point = len(columns[2]) - size
                 columns[2] = '...' + columns[2][truncate_point:]
             record = (columns[0], columns[2], columns[4], str(columns[5])[1:len(columns[5])-1])
-            max_fields = self._update_max_lengths(max_fields, record)
-            records.append(record)
+            self.max_fields = self._update_max_lengths(self.max_fields, record)
+            self.records.append(record)
+        # NOTE Do not return anything... wait for all blocks (lines)...
 
+
+    def eof(self):
         # Form a format line
-        fmt = ('{{:<{}}} ' * len(max_fields)).format(*max_fields)
+        fmt = ('{{:<{}}} ' * len(self.max_fields)).format(*self.max_fields)
 
         # Format the output
         term_width = outproc.term.get_width()
         lines = []
-        last_field_start_column = sum(max_fields) + 3       # 3 == spaces between columns
-        for row, r in enumerate(records):
+        last_field_start_column = sum(self.max_fields) + 3  # 3 == spaces between columns
+        for row, r in enumerate(self.records):
             # Colorize
             if r[0].startswith('/'):
                 color = self.real_fs
