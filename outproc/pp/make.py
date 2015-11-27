@@ -58,7 +58,7 @@ class Processor(outproc.Processor):
         self.include = config.get_color('compiler-option-I', 'green')
         self.macro_define = config.get_color('compiler-option-D', 'yellow')
         self.macro_undefine = config.get_color('compiler-option-U', 'yellow')
-        self.optimization = config.get_color('compiler-option-f', 'cian')
+        self.optimization = config.get_color('compiler-option-f', 'cyan')
         self.target_arch = config.get_color('compiler-option-m', 'magenta')
         self.warning = config.get_color('compiler-option-W', 'yellow+bold')
         self.lib_paths = config.get_color('compiler-option-L', 'green')
