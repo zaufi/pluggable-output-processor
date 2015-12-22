@@ -65,6 +65,7 @@ TODO
 * <del>handle `gcc -Q --help=<smth>`</del> Done!
 * <del>support for TrueColor terminals (`konsole` for example)</del>
 * failure to display error on line w/ C++ operator^()
+* `lsmod` fails to make good looking columns... better to have a formatter (colorizer) for it! ;-)
 
 See also
 ========
