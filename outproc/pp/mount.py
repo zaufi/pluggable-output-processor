@@ -41,6 +41,7 @@ class Processor(outproc.Processor):
     def __init__(self, config, binary):
         super().__init__(config, binary)
         self.mount_point_max_size = config.get_int('mountpoint-max-size', 0)
+        self.trim_char = config.get_string('trim-char', '...')
         self.kernel_fs = config.get_color('kernel-fs', 'grey+bold')
         self.real_fs = config.get_color('real-fs', 'normal')
         self.net_fs = config.get_color('net-fs', 'blue+bold')
@@ -90,7 +91,7 @@ class Processor(outproc.Processor):
                         break
                     size += len(p) + 1
                 truncate_point = len(columns[2]) - size
-                columns[2] = '...' + columns[2][truncate_point:]
+                columns[2] = self.trim_char + columns[2][truncate_point:]
             record = (columns[0], columns[2], columns[4], str(columns[5])[1:len(columns[5])-1])
             self.max_fields = self._update_max_lengths(self.max_fields, record)
             self.records.append(record)

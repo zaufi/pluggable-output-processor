@@ -343,6 +343,7 @@ _BUILTIN_DATA_TYPES_MAPPING = [
   , ('short int', 'short')
   , ('short unsigned int', 'unsigned short')
   , ('unsigned int', 'unsigned')
+  , ('std::basic_string<char>', 'std::string')
   ]
 
 

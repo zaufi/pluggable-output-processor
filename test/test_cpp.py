@@ -211,7 +211,7 @@ class CppSanitizerTester(unittest.TestCase):
 
 
     def test_5(self):
-        line = 'std::vector<std::pair<int, std::list<std::string> > >'
+        line = 'std::vector<std::pair<int, std::list<std::basic_string<char> > > >'
         result = SnippetSanitizer.cleanup_snippet(line)
         self.assertEqual(result, 'std::vector<std::pair<int, std::list<std::string>>>')
 
