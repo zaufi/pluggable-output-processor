@@ -70,7 +70,7 @@ TODO
 See also
 ========
 
-[raw-ebuld]: https://github.com/zaufi/zaufi-overlay/blob/master/dev-util/pluggable-output-processor/pluggable-output-processor-scm.ebuild
+[raw-ebuild]: https://github.com/zaufi/zaufi-overlay/blob/master/dev-util/pluggable-output-processor/pluggable-output-processor-scm.ebuild
 [my-overlay]: https://github.com/zaufi/zaufi-overlay/ "My ebuilds overlay"
 
 [![Downloads](https://pypip.in/d/outproc/badge.png)](https://pypi.python.org/pypi/outproc)
