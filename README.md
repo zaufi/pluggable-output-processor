@@ -28,7 +28,7 @@ Easy!
 
 For Gentoo users there is a [live ebuild][raw-ebuild] in my [repository][my-overlay]. 
 Also (for Gentoo users again ;-) `eselect` module from `contrib/` will be installed by the ebuild. 
-Users of other distros have to make a symlinks to required modules manually:
+Users of other distros have to make symlinks to required modules manually:
 
     $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/<module-name>
 
@@ -66,6 +66,7 @@ TODO
 * <del>support for TrueColor terminals (`konsole` for example)</del>
 * failure to display error on line w/ C++ operator^()
 * `lsmod` fails to make good looking columns... better to have a formatter (colorizer) for it! ;-)
+* Handle `$(error ...)` function of GNU Make
 
 See also
 ========
