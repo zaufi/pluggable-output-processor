@@ -30,6 +30,7 @@ class Config(object):
         This class can read and give an access to that data in a easy to use way.
     '''
 
+    # TODO Use gamed groups
     _RGB_COLOR_SPEC_RE = re.compile('rgb\s*\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)')
     _RGB_HEX_COLOR_SPEC_RE = re.compile('rgb\s*\(\s*([0-9]{6})\s*\)')
     _GRAYSCALE_SPEC_RE = re.compile('gray\s*\(\s*([0-9]+)\s*\)')
