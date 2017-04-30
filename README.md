@@ -1,6 +1,8 @@
 What is This?
 =============
 
+![Travis CI](https://travis-ci.org/zaufi/pluggable-output-processor.svg?branch=master)
+
 _Pluggable Output Processor_ is an engine to wrap any executabe and capture its output through
 a pluggable module to colorize it and/or (re)format.
 
