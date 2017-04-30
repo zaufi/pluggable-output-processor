@@ -18,9 +18,6 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Project specific imports
-#from context import data_dir_base, output_dir_base, preapre_properties
-from onixs.bsci.cli import Application
-from onixs.bsci.contextmanager import change_work_dir
 
 # Standard imports
 import os
