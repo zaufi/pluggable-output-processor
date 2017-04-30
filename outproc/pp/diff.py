@@ -18,7 +18,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ..processing import Processor as ProcessorBase, force_processing
+from ..processing import Processor as ProcessorBase, force_processing, force_processing_requested
 
 import os
 import re
