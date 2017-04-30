@@ -2,7 +2,7 @@
 #
 # This file is a part of Pluggable Output Processor
 #
-# Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
+# Copyright (c) 2013-2017 Alex Turbov <i.zaufi@gmail.com>
 #
 # Pluggable Output Processor is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -17,8 +17,9 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
 import os
+import pathlib
+import re
 import termcolor
 
 
@@ -38,12 +39,15 @@ class Config(object):
     def __init__(self, filename):
         '''Read configuration data from a given file'''
 
+        assert isinstance(filename, pathlib.Path)
+
         # Remember filename for future references (to show errors)
         self.filename = filename
         # Make an empty dict for configuration data
         self.data = {}
 
         # Set some predefined values
+        # TODO Replace w/ `enum`
         class dummy:
             pass
         self.color = dummy
@@ -54,11 +58,11 @@ class Config(object):
         # NOTE Konsole terminal from KDE supports itallic font style
         termcolor.ATTRIBUTES['itallic'] = 3
 
-        if not os.path.isfile(filename):
+        if not filename.exists():
             return
 
         # Read the file line by line, and collect keys and values into an internal dict
-        with open(filename) as ifs:
+        with filename.open() as ifs:
             for l in ifs.readlines():
                 # Strip possible comment lines
                 line_str = l.strip()

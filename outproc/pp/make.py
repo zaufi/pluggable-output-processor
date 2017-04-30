@@ -2,7 +2,7 @@
 #
 # Output processor for `make`
 #
-# Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
+# Copyright (c) 2013-2017 Alex Turbov <i.zaufi@gmail.com>
 #
 # Pluggable Output Processor is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -18,13 +18,14 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ..processing import Processor as ProcessorBase, force_processing, force_processing_requested
+from .cmake import Processor as CMakeProcessor
+
 import os
-import outproc
 import re
 import shlex
 import sys
 
-import outproc.pp.cmake
 
 _KNOWN_COMPILERS = ['c++', 'g++', 'gcc']
 
@@ -33,7 +34,7 @@ _MAKE_ERROR_MSG_RE = re.compile('make(\[[0-9]+\])?: \*\*\*')
 _MAKE_MISC_PATH_RE = re.compile('.*(`.*\').*')
 
 
-class Processor(outproc.Processor):
+class Processor(ProcessorBase):
 
     @staticmethod
     def want_to_handle_current_command():
@@ -44,9 +45,9 @@ class Processor(outproc.Processor):
           and 'oldconfig' not in sys.argv \
           and 'nconfig' not in sys.argv \
           and 'edit_cache' not in sys.argv \
-          and (sys.stdout.isatty() or outproc.force_processing_requested())
+          and (sys.stdout.isatty() or force_processing_requested())
         if result:
-            outproc.force_processing()
+            force_processing()
         return result
 
 
@@ -62,7 +63,7 @@ class Processor(outproc.Processor):
         self.target_arch = config.get_color('compiler-option-m', 'magenta')
         self.warning = config.get_color('compiler-option-W', 'yellow+bold')
         self.lib_paths = config.get_color('compiler-option-L', 'green')
-        self.cmake_processor = outproc.pp.cmake.Processor(config, binary)
+        self.cmake_processor = CMakeProcessor(config, binary)
 
 
     def _detect_make_message(self, line):

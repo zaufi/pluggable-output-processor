@@ -17,5 +17,21 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Set PEP396 version attribute
-__version__ = '0.15'
+# Project specific imports
+
+# Standard imports
+
+log = None
+try:
+    import portage.output
+    log = portage.output.EOutput()
+except ImportError:
+    class FakeLogger(object):
+        def einfo(self, msg):
+            print(' \x1b[0;32;1m*\x1b[0m {}'.format(msg))
+        def eerror(self, msg):
+            print(' \x1b[0;31;1m*\x1b[0m {}'.format(msg), file=sys.stderr)
+        def ewarn(self, msg):
+            print(' \x1b[0;33;1m*\x1b[0m {}'.format(msg))
+
+    log = FakeLogger()

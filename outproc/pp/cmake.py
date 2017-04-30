@@ -2,7 +2,7 @@
 #
 # Output processor for `cmake`
 #
-# Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
+# Copyright (c) 2013-2017 Alex Turbov <i.zaufi@gmail.com>
 #
 # Pluggable Output Processor is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -18,9 +18,10 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ..processing import Processor as ProcessorBase
+from ..term import move_above
+
 import os
-import outproc
-import outproc.term
 import re
 import shlex
 
@@ -30,7 +31,7 @@ _FAILURE_RE = re.compile('^-- .* - (not found|Failed)$')
 _FATAL_RE = re.compile('^CMake Error.*')
 
 
-class Processor(outproc.Processor):
+class Processor(ProcessorBase):
 
     def __init__(self, config, binary):
         super().__init__(config, binary)
@@ -59,7 +60,7 @@ class Processor(outproc.Processor):
             # The line above is a begining of some test and here (in the `line`) a result of it
             # Move cursor to one line up and override it!
             lines = int(len(self.prev_line) / os.get_terminal_size().columns)
-            move_code = outproc.term.move_above(lines + 1)
+            move_code = move_above(lines + 1)
         self.prev_line = line
         if _SUCCESS_RE.match(line) or _SUCCESS2_RE.match(line):
             return self._colorize(move_code + self.success, line)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Install script for Pluggable Output Processor
 #
@@ -17,17 +17,26 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
+# Project specific imports
 import outproc
+
+# Standard imports
+import pathlib
+from setuptools import setup, find_packages
+
+def sources_dir():
+    return pathlib.Path(__file__).parent
 
 
 def readfile(filename):
-    with open(filename, encoding='UTF-8') as f:
+    with (sources_dir() / filename).open(encoding='UTF-8') as f:
         return f.read()
+
+
+def get_requirements_from(filename):
+    with (sources_dir() / filename).open(encoding='UTF-8') as f:
+        return f.readlines()
+
 
 setup(
     name             = 'outproc'
@@ -51,10 +60,11 @@ setup(
       , 'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)'
       , 'Natural Language :: English'
       , 'Operating System :: POSIX :: Linux'
-      , 'Programming Language :: Python :: 3'
+      , 'Programming Language :: Python :: 3 :: 3.5'
       , 'Topic :: Utilities'
       ]
-  , install_requires = ['argparse', 'setuptools', 'termcolor']
+  , keywords = 'console gcc make cmake ouput colorizer'
+  , install_requires   = get_requirements_from('requirements.txt')
   , test_suite       = 'test'
-  , tests_require    = ['termcolor']
+  , tests_require      = get_requirements_from('test-requirements.txt')
   )

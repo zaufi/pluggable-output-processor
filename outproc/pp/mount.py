@@ -2,7 +2,7 @@
 #
 # Output processor for `mount`
 #
-# Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
+# Copyright (c) 2013-2017 Alex Turbov <i.zaufi@gmail.com>
 #
 # Pluggable Output Processor is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -18,15 +18,19 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Project specific imports
+from ..processing import Processor as ProcessorBase
+from ..term import fg2bg, get_width, is_real_term
+
+# Standard imports
 import os
-import outproc
-import outproc.term
 import sys
 
 # TODO Add more?
 KNOWN_NETWORK_FILESYSTEMS = ['nfs']
 
-class Processor(outproc.Processor):
+
+class Processor(ProcessorBase):
 
     @staticmethod
     def want_to_handle_current_command():
@@ -50,12 +54,12 @@ class Processor(outproc.Processor):
         if self.odd_bg == config.color.normal:
             self.odd_bg = ''
         else:
-            self.odd_bg = outproc.term.fg2bg(self.odd_bg)
+            self.odd_bg = fg2bg(self.odd_bg)
         self.even_bg = config.get_color('even-bg', 'normal', with_reset=False)
         if self.even_bg == config.color.normal:
             self.even_bg = ''
         else:
-            self.even_bg = outproc.term.fg2bg(self.even_bg)
+            self.even_bg = fg2bg(self.even_bg)
 
         self.max_fields = (0, 0, 0)
         self.records = []
@@ -103,7 +107,7 @@ class Processor(outproc.Processor):
         fmt = ('{{:<{}}} ' * len(self.max_fields)).format(*self.max_fields)
 
         # Format the output
-        term_width = outproc.term.get_width()
+        term_width = get_width()
         lines = []
         last_field_start_column = sum(self.max_fields) + 3  # 3 == spaces between columns
         for row, r in enumerate(self.records):
@@ -126,11 +130,11 @@ class Processor(outproc.Processor):
                     line += opt + (',' if i != last else '')
                 else:
                     # Overflow
-                    if outproc.term.is_real_term():
+                    if is_real_term():
                         line += ' ' * (term_width - len(line))
                     lines.append(color + bg_color + line + self.config.color.reset)
                     line = ' ' * last_field_start_column + opt + (',' if i != last else '')
-            if outproc.term.is_real_term():
+            if is_real_term():
                 line += ' ' * (term_width - len(line))
             lines.append(color + bg_color + line + self.config.color.reset)
         return lines

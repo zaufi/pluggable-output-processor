@@ -1,78 +1,87 @@
+# -*- coding: utf-8 -*-
 #
-# Unit tests for Config class
+# This file is a part of Pluggable Output Processor
 #
+# Copyright (c) 2013-2017 Alex Turbov <i.zaufi@gmail.com>
+#
+# Pluggable Output Processor is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Pluggable Output Processor is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+'''
+    Unit tests for Config class
+'''
+
+# Project specific imports
+from context import outproc, make_data_filename
+from outproc.config import Config
 
 # Standard imports
 import os
+import pytest
 import sys
 import termcolor
-import unittest
 
 sys.path.insert(0, '..')
 
-# Project specific imports
-import outproc
-
-class ConfigTester(unittest.TestCase):
+class config_tester:
     '''Unit tests for Config class'''
 
-    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-
-    def setUp(self):
-        pass
-
-
-    def data_file(self, filename):
-        return os.path.join(self.data_dir, filename)
+    def not_exitsted_file_test(self):
+        cfg = Config(make_data_filename('not-existed-file'))
+        assert cfg.get_string('not-existed', 'default') == 'default'
+        assert cfg.get_int('not-existed', 123) == 123
 
 
-    def test_not_exitsted_file(self):
-        cfg = outproc.Config('not-existed-file')
-        self.assertEqual(cfg.get_string('not-existed', 'default'), 'default')
-        self.assertEqual(cfg.get_int('not-existed', 123), 123)
+    def get_string_value_test(self):
+        cfg = Config(make_data_filename('sample.conf'))
+        assert cfg.get_string('some') == 'value'
+        assert cfg.get_string('not-existed', 'default') == 'default'
+        assert cfg.get_string('some-int') == '123'
 
 
-    def test_get_string_value(self):
-        cfg = outproc.Config(self.data_file('sample.conf'))
-        self.assertEqual(cfg.get_string('some'), 'value')
-        self.assertEqual(cfg.get_string('not-existed', 'default'), 'default')
-        self.assertEqual(cfg.get_string('some-int'), '123')
-
-
-    def test_get_int_value(self):
-        cfg = outproc.Config(self.data_file('sample.conf'))
-        self.assertEqual(cfg.get_int('some-int'), 123)
-        self.assertEqual(cfg.get_int('not-existed', 123), 123)
-        with self.assertRaises(ValueError):
+    def get_int_value_test(self):
+        cfg = Config(make_data_filename('sample.conf'))
+        assert cfg.get_int('some-int') == 123
+        assert cfg.get_int('not-existed', 123) == 123
+        with pytest.raises(ValueError):
             cfg.get_int('not-an-int', 123)
 
 
-    def test_get_color_value(self):
-        cfg = outproc.Config(self.data_file('sample.conf'))
-        self.assertEqual(cfg.get_color('red', 'red'), '\x1b[0m\x1b[31m')
-        self.assertEqual(cfg.get_color('red', 'red', with_reset=False), '\x1b[31m')
-        self.assertEqual(cfg.get_color('error', 'normal'), '\x1b[0m\x1b[31m\x1b[1m')
-        self.assertEqual(cfg.get_color('error', 'normal',with_reset=False), '\x1b[31m\x1b[1m')
-        self.assertEqual(cfg.get_color('not-existed', 'normal'), '\x1b[0m\x1b[38m')
-        self.assertEqual(cfg.get_color('some-int', 'reset'), '\x1b[0m\x1b[38;5;123m')
-        self.assertEqual(cfg.get_color('none', 'none'), '')
-        #self.assertEqual(cfg.get_color('invalid-color', 'red'), '\x1b[0;31m')
+    def get_color_value_test(self):
+        cfg = Config(make_data_filename('sample.conf'))
+        assert cfg.get_color('red', 'red') == '\x1b[0m\x1b[31m'
+        assert cfg.get_color('red', 'red', with_reset=False) == '\x1b[31m'
+        assert cfg.get_color('error', 'normal') == '\x1b[0m\x1b[31m\x1b[1m'
+        assert cfg.get_color('error', 'normal', with_reset=False) == '\x1b[31m\x1b[1m'
+        assert cfg.get_color('not-existed', 'normal') == '\x1b[0m\x1b[38m'
+        assert cfg.get_color('some-int', 'reset') == '\x1b[0m\x1b[38;5;123m'
+        assert cfg.get_color('none', 'none') == ''
         # Try TrueColor specs
-        self.assertEqual(cfg.get_color('true_rgb_red', 'red'), '\x1b[0m\x1b[38;2;255;0;0m')
-        self.assertEqual(cfg.get_color('true_rgb_green', 'red'), '\x1b[0m\x1b[38;2;0;255;0m')
-        self.assertEqual(cfg.get_color('true_rgb_blue', 'red'), '\x1b[0m\x1b[38;2;0;0;255m')
-        with self.assertRaises(TypeError):
+        assert cfg.get_color('true_rgb_red', 'red') == '\x1b[0m\x1b[38;2;255;0;0m'
+        assert cfg.get_color('true_rgb_green', 'red') == '\x1b[0m\x1b[38;2;0;255;0m'
+        assert cfg.get_color('true_rgb_blue', 'red') == '\x1b[0m\x1b[38;2;0;0;255m'
+        with pytest.raises(TypeError):
             cfg.get_color('red')
 
 
-    def test_get_bool_value(self):
-        cfg = outproc.Config(self.data_file('sample.conf'))
-        self.assertEqual(cfg.get_bool('not-existed'), None)
-        self.assertEqual(cfg.get_bool('not-existed', True), True)
-        self.assertEqual(cfg.get_bool('not-existed', False), False)
-        self.assertEqual(cfg.get_bool('true-bool-key-1'), True)
-        self.assertEqual(cfg.get_bool('false-bool-key-1'), False)
-        self.assertEqual(cfg.get_bool('true-bool-key-2'), True)
-        self.assertEqual(cfg.get_bool('false-bool-key-2'), False)
-        with self.assertRaises(ValueError):
+    def get_bool_value_test(self):
+        cfg = Config(make_data_filename('sample.conf'))
+        assert cfg.get_bool('not-existed') is None
+        assert cfg.get_bool('not-existed', True) == True
+        assert cfg.get_bool('not-existed', False) == False
+        assert cfg.get_bool('true-bool-key-1') == True
+        assert cfg.get_bool('false-bool-key-1') == False
+        assert cfg.get_bool('true-bool-key-2') == True
+        assert cfg.get_bool('false-bool-key-2') == False
+        with pytest.raises(ValueError):
             cfg.get_bool('some-int')

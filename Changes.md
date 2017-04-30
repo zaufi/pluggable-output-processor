@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.15
+------------
+
+* break cycle dependency of `setup.py` on `termcolor` package (close #9)
+
 Version 0.14
 ------------
 

@@ -17,5 +17,31 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Set PEP396 version attribute
-__version__ = '0.15'
+'''
+    Unit tests for terminal helpers
+'''
+
+# Project specific imports
+from context import outproc
+from outproc.config import Config
+from outproc.pp.mount import Processor
+
+# Standard imports
+import pathlib
+import sys
+import termcolor
+
+
+class mount_processor_tester:
+
+    def setup_method(self):
+        self.config = Config(pathlib.Path('doesnt-matter'))
+        self.pp = Processor(self.config, 'mount')
+
+
+    def long_mounts_list_test(self):
+        lines = self.pp.handle_block(b'/dev/sdb2 on / type btrfs (rw,noatime)\n')
+        lines = self.pp.eof()
+
+        print('lines={}'.format(repr(lines)))
+        #assert 0

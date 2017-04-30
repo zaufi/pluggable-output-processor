@@ -2,7 +2,7 @@
 #
 # Output processor for `diff`
 #
-# Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
+# Copyright (c) 2013-2017 Alex Turbov <i.zaufi@gmail.com>
 #
 # Pluggable Output Processor is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -18,14 +18,14 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ..processing import Processor as ProcessorBase, force_processing
+
 import os
-import outproc
-import outproc.term
 import re
 import sys
 
 
-class Processor(outproc.Processor):
+class Processor(ProcessorBase):
 
     @staticmethod
     def _remove_color_options():
@@ -38,13 +38,13 @@ class Processor(outproc.Processor):
     def want_to_handle_current_command():
         result = False
         if '--color=always' in sys.argv:
-            outproc.force_processing()
+            force_processing()
             Processor._remove_color_options()
             result = True
         elif '--color=no' in sys.argv:
             Processor._remove_color_options()
             result = False
-        elif sys.stdout.isatty() or outproc.force_processing_requested():
+        elif sys.stdout.isatty() or force_processing_requested():
             result = True
         return result
 

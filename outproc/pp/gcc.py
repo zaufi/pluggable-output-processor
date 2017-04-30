@@ -2,7 +2,7 @@
 #
 # Output processor for `gcc`
 #
-# Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
+# Copyright (c) 2013-2017 Alex Turbov <i.zaufi@gmail.com>
 #
 # Pluggable Output Processor is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -18,19 +18,20 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ..cpp_helpers import CodeFormatter, SimpleCppLexer, SnippetSanitizer
+from ..processing import Processor as ProcessorBase
+from ..term import get_size, get_width, fg2bg, column_formatter, pos_to_offset
+
 import collections
 import functools
 import os
-import outproc
-import outproc.term
 import re
 import shlex
 import sys
 import textwrap
 
-from outproc.cpp_helpers import CodeFormatter, SimpleCppLexer, SnippetSanitizer
 
-_TERM_WIDTH = outproc.term.get_size()[0]
+_TERM_WIDTH = get_size()[0]
 _LOCATION_RE = re.compile('([^ :]+?):([0-9]+(,|:[0-9]+[:,]?)?)?')
 # /tmp/ccUlKMZA.o:zz.cc:function main: error: undefined reference to 'boost::iostreams::zlib::default_strategy'
 _LINK_ERROR_RE = re.compile(':function (vtable for )?(.*): error: ')
@@ -44,7 +45,7 @@ _DNH_OPTIONS = ['-M', '-MM', '-MF', '-MG', '-MP', '-MT', '-MQ', '-MD', '-MMD', '
 Range = collections.namedtuple('Range', ['start', 'end'])
 
 
-class Processor(outproc.Processor):
+class Processor(ProcessorBase):
 
     def __init__(self, config, binary):
         super().__init__(config, binary)
@@ -67,7 +68,7 @@ class Processor(outproc.Processor):
         self.enabled_option = config.get_color('enabled-option', 'green+bold')
         self.disabled_option = config.get_color('disabled-option', 'red+bold')
         self.neutral_option = config.get_color('neutral-option', 'white')
-        self.code_cursor = outproc.term.fg2bg(config.get_color('code-cursor', 'red', with_reset=False))
+        self.code_cursor = fg2bg(config.get_color('code-cursor', 'red', with_reset=False))
         self.nl = config.get_bool('new-line-after-code', True)
 
         self.max_code_snippet_length = config.get_int('max-code-snippet-length', int(_TERM_WIDTH * 2 / 3))
@@ -363,7 +364,7 @@ class Processor(outproc.Processor):
         line = self.code + self._handle_code_fragment(self.prev_line, True) + self.config.color.reset
 
         # Find a cursor position for a transformed line
-        pos = outproc.term.pos_to_offset(line, pos)
+        pos = pos_to_offset(line, pos)
         line = line[:pos] + \
           self.code_cursor + line[pos:pos+1] + self.config.color.normal_bg \
           + line[pos+1:] + ('\n' if self.nl else '')
@@ -409,7 +410,7 @@ class Processor(outproc.Processor):
 
 
     def _handle_help_screen_eof(self):
-        term_width = outproc.term.get_width()
+        term_width = get_width()
         text_size = term_width - self.max_option_width - 2
         fmt = '  {{:<{}}}{{}}'.format(self.max_option_width)
 
@@ -430,14 +431,14 @@ class Processor(outproc.Processor):
 
     def _handle_query_screen_eof(self):
         assert(0 < self.max_option_width)
-        term_width = outproc.term.get_width()
+        term_width = get_width()
         columns = int(term_width / (self.max_option_width + 2))
         cell_width = int(term_width / columns)
         fmt = '{{:<{}}}'.format(cell_width)
 
         lines = []
         line = ''
-        for i in outproc.term.column_formatter(len(self.help_options), columns):
+        for i in column_formatter(len(self.help_options), columns):
             if i == -1:
                 lines.append(line)
                 line = ''
@@ -485,7 +486,7 @@ class Processor(outproc.Processor):
         # Try to handle an output if:
         # 0) gcc is not used to produce a dependencies for GNU make
         # 1) what else?
-        result = outproc.Processor.want_to_handle_current_command() \
+        result = ProcessorBase.want_to_handle_current_command() \
           and not functools.reduce(
               lambda state, item: state or item in _DNH_OPTIONS
             , sys.argv

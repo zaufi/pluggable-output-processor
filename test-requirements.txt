@@ -1,3 +1,5 @@
 argparse
 pytest
+pytest-cov
+pytest-mock
 termcolor
