@@ -24,59 +24,21 @@ Installation
 
 Easy!
 
-    $ tar -xzf outproc-X.Y.tar.gz
-    $ cd outproc-X.Y
-    $ sudo easy_install .
+    $ pip install outproc
 
-For Gentoo users there is a [live ebuild][raw-ebuild] in my [repository][my-overlay]. 
-Also (for Gentoo users again ;-) `eselect` module from `contrib/` will be installed by the ebuild. 
+For Gentoo users there is a [live ebuild][raw-ebuild] in my [repository][my-overlay].
+Also (for Gentoo users again ;-) `eselect` module from `contrib/` will be installed by the ebuild.
 Users of other distros have to make symlinks to required modules manually:
 
     $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/<module-name>
 
-and then make sure `/usr/lib/outproc/bin` placed __before__ `/usr/bin` (and anything else) in your 
+and then make sure `/usr/lib/outproc/bin` placed __before__ `/usr/bin` (and anything else) in your
 user/system `PATH` environment. Available modules (plugins) can be found at `<python-site-packages-dir>/outproc/pp`.
 For example, to install the `gcc` module do the following:
 
     $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/gcc
 
-Then you may edit `/etc/outproc/gcc.conf` to adjust color settings. 
-
-
-TODO
-====
-
-* continue to improve C++ tokenizer (few things can be better)
-* unit tests for tokenizer
-* test files w/ to cause various error messages from gcc (+ unit test for colorizer somehow)
-* continue to improve `cmake` support (+ unit tests)
-* <del>turn `mount` output into a human readable look-n-feel</del> Done!
-* colorize `df` depending on free space threshold
-* colorize `diff` (easy! :-) -- Done for `-u` mode
-* <del>`eselect` module to manage tools under control</del> Done!
-* ask module is it want to handle a current command or we can do `execv` instead
-* implement `STDIN` reader (pipe mode)
-* handle `KeyboardInterrupt` and hide Python crap
-* `ctest` module to colorize test results
-* handle as note:
-
-        /usr/include/python3.3/pyconfig.h:1397:0: warning: "_XOPEN_SOURCE" redefined [enabled by default]
-        #define _XOPEN_SOURCE 700
-        <command-line>:0:0: note: this is the location of the previous definition
-* handle `make[1]: warning:`
-* <del>handle `gcc -Q --help=<smth>`</del> Done!
-* <del>support for TrueColor terminals (`konsole` for example)</del>
-* failure to display error on line w/ C++ operator^()
-* `lsmod` fails to make good looking columns... better to have a formatter (colorizer) for it! ;-)
-* Handle `$(error ...)` function of GNU Make
-
-See also
-========
+Then you may edit `/etc/outproc/gcc.conf` to adjust color settings.
 
 [raw-ebuild]: https://github.com/zaufi/zaufi-overlay/blob/master/dev-util/pluggable-output-processor/pluggable-output-processor-scm.ebuild
 [my-overlay]: https://github.com/zaufi/zaufi-overlay/ "My ebuilds overlay"
-
-[![Downloads](https://pypip.in/d/outproc/badge.png)](https://pypi.python.org/pypi/outproc)
-[![Downloads](https://pypip.in/v/outproc/badge.png)](https://pypi.python.org/pypi/outproc)
-[![Build Status](https://api.travis-ci.org/zaufi/pluggable-output-processor.png?branch=master)](https://travis-ci.org/zaufi/pluggable-output-processor)
-[![Requirements Status](https://requires.io/github/zaufi/pluggable-output-processor/requirements.png?branch=master)](https://requires.io/github/zaufi/pluggable-output-processor/requirements/?branch=master)
