@@ -48,7 +48,11 @@ setup(
   , url              = 'http://zaufi.github.io/pluggable-output-processor.html'
   , download_url     = 'https://github.com/zaufi/pluggable-output-processor/archive/version-{}.tar.gz'.format(outproc.__version__)
   , packages         = ['outproc', 'outproc.pp']
-  , scripts          = ['bin/outproc']
+  , entry_points       = {
+        'console_scripts': [
+            'outproc = outproc.cli:main'
+          ]
+      }
   , data_files       = [
         ('/etc/outproc', ['conf/cmake.conf', 'conf/diff.conf', 'conf/gcc.conf', 'conf/make.conf', 'conf/mount.conf'])
       ]
@@ -65,6 +69,5 @@ setup(
       ]
   , keywords = 'console gcc make cmake ouput colorizer'
   , install_requires   = get_requirements_from('requirements.txt')
-  , test_suite       = 'test'
   , tests_require      = get_requirements_from('test-requirements.txt')
   )

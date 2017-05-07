@@ -1,4 +1,4 @@
-argparse
+exitstatus
 pytest
 pytest-cov
 pytest-mock

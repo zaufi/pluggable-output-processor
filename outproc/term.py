@@ -34,17 +34,17 @@ def get_width():
     return os.get_terminal_size().columns if sys.stdout.isatty() else 100500
 
 def move_above(lines):
-    assert(isinstance(lines, int))
+    assert isinstance(lines, int)
     return '\x1b[{}A'.format(lines)
 
 
 def move_below(lines):
-    assert(isinstance(lines, int))
+    assert isinstance(lines, int)
     return '\x1b[{}B'.format(lines)
 
 
 def move_to_col(col):
-    assert(isinstance(col, int) and col < os.get_terminal_size().columns)
+    assert isinstance(col, int) and col < os.get_terminal_size().columns
     return '\x1b[{}G'.format(col)
 
 
@@ -54,7 +54,7 @@ def pos_to_offset(line, requested_pos):
 
         TODO Consider other than color ESC sequences
     '''
-    assert(isinstance(line, str) and isinstance(requested_pos, int) and requested_pos < len(line))
+    assert isinstance(line, str) and isinstance(requested_pos, int) and requested_pos < len(line)
     inside_esc_seq = False
     current_pos = 0
     for i, c in enumerate(line):
@@ -68,7 +68,8 @@ def pos_to_offset(line, requested_pos):
             if current_pos == requested_pos:
                 return i
             current_pos += 1
-    assert(not 'Smth wrong w/ input sequence!')
+
+    assert False, 'Smth wrong w/ input sequence!'
 
 
 def fg2bg(color):
@@ -77,7 +78,7 @@ def fg2bg(color):
     # must contain a reference to the first part (i.e. '\\1') and the next
     # char (we want to replace '3' --> '4') is a number, so finally we have
     # '\\14' -- right, it is an invalid reference...
-    assert(isinstance(color, str))
+    assert isinstance(color, str)
 
     match = _FG_COLOR_IN_ESC_SEQ_RE.search(color)
     if match:

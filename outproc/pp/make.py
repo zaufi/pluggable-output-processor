@@ -94,7 +94,7 @@ class Processor(ProcessorBase):
             args = shlex.split(line)
         except:
             return (False, [], 0)
-        assert(args is not None)
+        assert args is not None
         i = 0
         for arg in args:
             if score == 4:
@@ -133,15 +133,11 @@ class Processor(ProcessorBase):
 
 
     def _colorize_option(self, option, color, line, last_find_idx):
-        assert(
-                isinstance(option, str)
-            and isinstance(color, str)
-            and isinstance(line, str)
-            and isinstance(last_find_idx, int)
-          )
+        assert isinstance(option, str) and isinstance(color, str) and isinstance(line, str) and isinstance(last_find_idx, int)
+
         # Find corresponding option at raw line
         pos = line.find(option, last_find_idx)
-        assert(pos != -1)
+        assert pos != -1
         # Colorise it
         line = line[:pos] + color + line[pos:pos+len(option)] + self.config.color.reset + line[pos+len(option):]
         last_find_idx = pos + len(color) + len(self.config.color.reset)
@@ -160,7 +156,7 @@ class Processor(ProcessorBase):
                 pos = line.find('`')
                 if pos != -1:
                     close_pos = line.index("'")
-                    assert(close_pos != -1)
+                    assert close_pos != -1
                     close_pos += 1
                     line = line[:pos] + self.misc_path + line[pos:close_pos] + self.misc + line[close_pos:]
             line += self.config.color.reset

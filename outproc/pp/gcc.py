@@ -163,28 +163,28 @@ class Processor(ProcessorBase):
                 if c == ';':
                     seen_semicolon = True
                 elif c == ' ' and seen_semicolon:
-                    assert(last_arg_start < with_start_pos + i - 1)
+                    assert last_arg_start < with_start_pos + i - 1
                     arg_ranges.append(Range(last_arg_start, with_start_pos + i - 1))
                     last_arg_start = with_start_pos + i + 1
                     seen_semicolon = False
                 elif c == '[':
                     opened_square_brackets += 1
-                    assert(not seen_semicolon)
+                    assert not seen_semicolon
                 elif c == ']':
-                    assert(not seen_semicolon)
+                    assert not seen_semicolon
                     if not opened_square_brackets:
                         # Found a closing square bracket!
                         # Append last template arg
                         arg_ranges.append(Range(last_arg_start, with_start_pos + i))
-                        assert(pos < with_start_pos + i)
+                        assert pos < with_start_pos + i
                         pos = with_start_pos + i + 1
                         break
                     else:
                         opened_square_brackets -= 1
 
             # Check invariant
-            assert('Misbalanced brackets?' and not opened_square_brackets)
-            assert('Template argument ranges expected to be non empty' and arg_ranges)
+            assert not opened_square_brackets, 'Misbalanced brackets?'
+            assert arg_ranges, 'Template argument ranges expected to be non empty'
 
             # Iterate over found template parameters
             for r in arg_ranges:
@@ -219,7 +219,7 @@ class Processor(ProcessorBase):
 
     def _handle_link_error(self, line, function):
         idx = line.find(function)
-        assert(idx != -1)
+        assert idx != -1
         code = self.code + self._handle_code_fragment(function, False) + self.error
         line = line[:idx] + code + line[idx + len(function):]
         return self._handle_error(line, idx + len(code))
@@ -344,14 +344,14 @@ class Processor(ProcessorBase):
         pos = line.find('^')
         if pos == -1:
             if line[0] == ' ':
-                assert(self.prev_line is None)
+                assert self.prev_line is None
                 self.prev_line = line
                 return None
             else:
                 self.prev_line = line
                 return line
 
-        assert(self.prev_line is not None)
+        assert self.prev_line is not None
         # Check if caret points after the end of a previous line.
         # For example:
         # /tmp/nn.cc:2:21: fatal error: iostreamz: No such file or directory
@@ -430,7 +430,7 @@ class Processor(ProcessorBase):
 
 
     def _handle_query_screen_eof(self):
-        assert(0 < self.max_option_width)
+        assert 0 < self.max_option_width
         term_width = get_width()
         columns = int(term_width / (self.max_option_width + 2))
         cell_width = int(term_width / columns)

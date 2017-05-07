@@ -208,7 +208,7 @@ class SimpleCppLexer(object):
             # If we r in a C++ style comment...
             if in_cpp_comment:
                 # Just merge everything till the end to a previous token
-                assert(tokens[-1].kind == SimpleCppLexer.Token.COMMENT)
+                assert tokens[-1].kind == SimpleCppLexer.Token.COMMENT
                 tokens[-1].token += tok
                 continue
 
@@ -220,16 +220,16 @@ class SimpleCppLexer(object):
             seen_backslash = False
             want_next = False
             for pos, c in enumerate(tok):
-                assert(not in_cpp_comment)
+                assert not in_cpp_comment
                 if seen_backslash:                          # Go to next char after backclash
                     seen_backslash = False                  # Ok, backslash was counted...
                     continue
                 elif in_string:
-                    assert(string_char and not seen_slash and not seen_star)
+                    assert string_char and not seen_slash and not seen_star
                     # Ok, we r at string now... Check if current char is a quote symbol
                     # Check if string ends...
                     if c == string_char:
-                        assert(tokens)
+                        assert tokens
                         # Join chars before (including a current) to a prev token
                         tokens[-1].token += tok[last_tokenized_pos:pos+1]
                         in_string = False                   # Drop the flag!
@@ -239,7 +239,7 @@ class SimpleCppLexer(object):
                 elif in_block_comment:
                     if seen_star and c == '/':              # Is end of block comment?
                         in_block_comment = False            # Drop the flag!
-                        assert(tokens)
+                        assert tokens
                         tokens[-1].token += tok[last_tokenized_pos:pos+1]
                         last_tokenized_pos = pos + 1
                     seen_star = bool(c == '*')
@@ -304,12 +304,12 @@ class SimpleCppLexer(object):
             if want_next:                                   # If we are at C++ style comment
                 continue                                    # Go for next tokens immediately
 
-            assert(not in_cpp_comment)
+            assert not in_cpp_comment
             if in_block_comment:
-                assert(tokens and tokens[-1].kind == SimpleCppLexer.Token.COMMENT)
+                assert tokens and tokens[-1].kind == SimpleCppLexer.Token.COMMENT
                 tokens[-1].token += tok[last_tokenized_pos:len(tok)]
             elif in_string:
-                assert(tokens and tokens[-1].kind == SimpleCppLexer.Token.STRING_LITERAL)
+                assert tokens and tokens[-1].kind == SimpleCppLexer.Token.STRING_LITERAL
                 tokens[-1].token += tok[last_tokenized_pos:len(tok)]
             elif tok[last_tokenized_pos:len(tok)]:
                 token, replace_prev = SimpleCppLexer._categorize_token(
@@ -317,7 +317,7 @@ class SimpleCppLexer(object):
                   , tokens[-1] if tokens else None
                   )
                 if replace_prev:
-                    assert(tokens)
+                    assert tokens
                     tokens[-1] = token
                 else:
                     tokens.append(token)
@@ -444,7 +444,7 @@ class SnippetSanitizer(object):
         idx = snippet.find(_STD_PLACEHOLDER)
         while idx != -1:
             close_pos = snippet.find('>', idx)
-            assert(close_pos != -1)
+            assert close_pos != -1
             snippet = snippet[:idx] \
               + _STD_PLACEHOLDERS_NS \
               + snippet[idx+len(_STD_PLACEHOLDER):close_pos] \

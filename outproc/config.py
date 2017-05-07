@@ -76,8 +76,8 @@ class Config(object):
 
     def get_string(self, key, default=None):
         '''Get string key value or default if absent'''
-        assert(isinstance(key, str))
-        assert(isinstance(default, str) or default is None)
+        assert isinstance(key, str)
+        assert isinstance(default, str) or default is None
 
         return self.data[key] if key in self.data else default
 
@@ -86,8 +86,8 @@ class Config(object):
         '''Get int key value or default if absent.
             Throw ValueError if not an integer.
         '''
-        assert(isinstance(key, str))
-        assert(isinstance(default, int) or default is None)
+        assert isinstance(key, str)
+        assert isinstance(default, int) or default is None
 
         try:
             return int(self.data[key]) if key in self.data else default
@@ -102,8 +102,8 @@ class Config(object):
         '''Get int key value or default if absent.
             Throw ValueError if not an integer.
         '''
-        assert(isinstance(key, str))
-        assert(isinstance(default, bool) or default is None)
+        assert isinstance(key, str)
+        assert isinstance(default, bool) or default is None
 
         if key in self.data:
             value = self.data[key]
@@ -122,8 +122,8 @@ class Config(object):
         '''Get color key value or default if absent.
             Throw ValueError if not an integer.
         '''
-        assert(isinstance(key, str))
-        assert(isinstance(default, str) or default is not None)
+        assert isinstance(key, str)
+        assert isinstance(default, str) or default is not None
 
         colors = [c.strip() for c in (self.data[key] if key in self.data else default).split('+')]
         result = ''
@@ -196,7 +196,7 @@ class Config(object):
 
 
     def _validate_rgb_component(self, c):
-        assert(isinstance(c, int))
+        assert isinstance(c, int)
         if c < 0 or 255 < c:
             raise ValueError('RGB component is out of range')
         return c
@@ -207,12 +207,12 @@ class Config(object):
 
 
     def _validate_grayscale(self, c):
-        assert(isinstance(c, int))
+        assert isinstance(c, int)
         if c < 0 or 24 < c:
             raise ValueError('Grayscale index is out of range')
         return c
 
 
     def _grayscale_to_index(self, g):
-        assert((232 + g) < 256)
+        assert (232 + g) < 256
         return 232 + g

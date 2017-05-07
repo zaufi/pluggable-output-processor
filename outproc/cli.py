@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Pluggable Output Processor (main module)
 #
-# Copyright (c) 2013 Alex Turbov <i.zaufi@gmail.com>
+# Copyright (c) 2013-2017 Alex Turbov <i.zaufi@gmail.com>
 #
 # Pluggable Output Processor is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -26,12 +26,13 @@ from outproc.processing import Processor, report_error_with_backtrace, SYSCONFDI
 
 # Standard imports
 import argparse
+import exitstatus
 import fcntl
 import os
 import pathlib
-import sys
 import select
 import subprocess
+import sys
 import traceback
 
 
@@ -197,7 +198,7 @@ class Application(object):
                     eof = True
                     self._out_lines_list(processor.eof())   # Notify processor about EOF
                 else:
-                    assert(not 'Unexpected event {}'.format(event))
+                    assert False, 'Unexpected event {}'.format(event)
 
         result = None
         while result is None:
@@ -205,13 +206,13 @@ class Application(object):
         sys.exit(result)
 
 
-if __name__ == "__main__":
+def main():
     try:
         a = Application()
         a.run()
     except KeyboardInterrupt:
-        sys.exit(1)
+        return exitstatus.ExitStatus.failure
     except RuntimeError as ex:
         log.eerror('Error: {}'.format(ex))
-        sys.exit(1)
-    sys.exit(0)
+        return exitstatus.ExitStatus.failure
+    return exitstatus.ExitStatus.success
