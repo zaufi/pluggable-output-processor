@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 Version [Unreleased]
 --------------------
 
+* fix exception in `cmake` processor when latter called from `make` process
+
 Version [0.17]
 --------------
 

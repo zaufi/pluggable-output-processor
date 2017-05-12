@@ -19,7 +19,7 @@
 #
 
 from ..processing import Processor as ProcessorBase
-from ..term import move_above
+from ..term import move_above, get_size
 
 import os
 import re
@@ -59,7 +59,7 @@ class Processor(ProcessorBase):
         if self.prev_line is not None and line.startswith(self.prev_line):
             # The line above is a begining of some test and here (in the `line`) a result of it
             # Move cursor to one line up and override it!
-            lines = int(len(self.prev_line) / os.get_terminal_size().columns)
+            lines = int(len(self.prev_line) / get_size()[1])
             move_code = move_above(lines + 1)
         self.prev_line = line
         if _SUCCESS_RE.match(line) or _SUCCESS2_RE.match(line):
