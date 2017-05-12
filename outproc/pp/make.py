@@ -41,6 +41,7 @@ class Processor(ProcessorBase):
         # Try to handle an output if:
         # 0) `menuconfig` target is not specified in command line (when linux kernel get compiled)
         # 1) we are connected to a real terminal or force flag set in the current environment
+        # TODO How to make sure a user tried to build the linux kernel?
         result = 'menuconfig' not in sys.argv \
           and 'oldconfig' not in sys.argv \
           and 'nconfig' not in sys.argv \

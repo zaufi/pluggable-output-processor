@@ -23,7 +23,7 @@ import re
 import termcolor
 
 
-class Config(object):
+class Config:
     ''' Simple configuration data accessor
 
         Every plugin may (and actually is) have a configuration data stored
@@ -37,7 +37,7 @@ class Config(object):
     _GRAYSCALE_SPEC_RE = re.compile('gray\s*\(\s*([0-9]+)\s*\)')
 
     def __init__(self, filename):
-        '''Read configuration data from a given file'''
+        ''' Read configuration data from a given file '''
 
         assert isinstance(filename, pathlib.Path)
 
@@ -62,6 +62,7 @@ class Config(object):
             return
 
         # Read the file line by line, and collect keys and values into an internal dict
+        # TODO Use configparser
         with filename.open() as ifs:
             for l in ifs.readlines():
                 # Strip possible comment lines
@@ -75,7 +76,7 @@ class Config(object):
 
 
     def get_string(self, key, default=None):
-        '''Get string key value or default if absent'''
+        ''' Get string key value or default if absent '''
         assert isinstance(key, str)
         assert isinstance(default, str) or default is None
 
@@ -83,7 +84,7 @@ class Config(object):
 
 
     def get_int(self, key, default=None):
-        '''Get int key value or default if absent.
+        ''' Get int key value or default if absent.
             Throw ValueError if not an integer.
         '''
         assert isinstance(key, str)
@@ -99,7 +100,7 @@ class Config(object):
 
 
     def get_bool(self, key, default=None):
-        '''Get int key value or default if absent.
+        ''' Get int key value or default if absent.
             Throw ValueError if not an integer.
         '''
         assert isinstance(key, str)

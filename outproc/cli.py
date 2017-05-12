@@ -41,10 +41,9 @@ import traceback
 class Application:
 
     def __init__(self):
-        # TODO Use `pathlib`
-        self.abspath = os.path.abspath(sys.argv[0])
-        self.basename = os.path.basename(self.abspath)
-        self.dirname = os.path.dirname(self.abspath)
+        path = pathlib.Path(sys.argv[0])
+        self.basename = path.name
+        self.dirname = path.resolve().parent
         self.pipe_mode = False
 
 
@@ -76,14 +75,17 @@ class Application:
     def _find_wrapped_binary(self):
         # Try to find a wrapped executable
         self.binary = None
-        for path in os.environ['PATH'].split(os.pathsep):
-            binary = os.path.join(path, self.basename)
-            if not path.startswith(self.dirname) and os.path.isfile(binary):
+        for path in map(lambda p: pathlib.Path(p), os.environ['PATH'].split(os.pathsep)):
+            binary = path / self.basename
+            # Current path not the same as our dirname,
+            # and there is a binary exists named same as our name,
+            # and finally there is no `outproc` in path (which is possible other install (instance) of this tool)
+            if path != self.dirname and binary.is_file() and 'outproc' not in path.parts:
                 self.binary = binary
                 break
+
         if self.binary is None:
-            log.eerror('Command not found: {}'.format(self.basename))
-            sys.exit(exitstatus.ExitStatus.failure)
+            raise RuntimeError('Command not found: {}'.format(self.basename))
 
 
     def _list_pp_modules(self):
@@ -104,13 +106,11 @@ class Application:
               , ['outproc.pp']
               )
         except:
-            report_error_with_backtrace('Failed to import module {}'.format(self.basename))
-            sys.exit(exitstatus.ExitStatus.failure)
+            raise RuntimeError('Failed to import module {}'.format(self.basename))
 
         # Make sure the module found has a Processor class
         if not hasattr(self.pp_mod, 'Processor') or not issubclass(self.pp_mod.Processor, Processor):
-            log.eerror('Module {} does not provide class `Processor`'.format(self.pp_mod.__name__))
-            sys.exit(exitstatus.ExitStatus.failure)
+            raise RuntimeError('Module {} does not provide class `Processor`'.format(self.pp_mod.__name__))
 
 
     def _load_config(self, config_file_name):
@@ -130,17 +130,15 @@ class Application:
         try:
             return Config(config_file_name_full)
         except:
-            report_error_with_backtrace('Unable to load configuration data')
-            sys.exit(exitstatus.ExitStatus.failure)
+            raise RuntimeError('Unable to load configuration data')
 
 
     def _create_output_processor(self, config):
         try:
             # Make an instance of an output processor
-            return self.pp_mod.Processor(config, self.binary)
+            return self.pp_mod.Processor(config, str(self.binary))
         except:
-            report_error_with_backtrace('Unable to make a preprocessor instance')
-            sys.exit(exitstatus.ExitStatus.failure)
+            raise RuntimeError('Unable to make a preprocessor instance')
 
 
     def _make_async(self, fd):
@@ -152,7 +150,7 @@ class Application:
         try:
             # Execute wrapped (and found) binary
             return subprocess.Popen(
-                [self.binary] + sys.argv[1:]
+                [str(self.binary)] + sys.argv[1:]
               , bufsize=1                                   # Per line buffering
               , stdin=sys.stdin                             # TODO Need to pass input to subprocess as well
               , stdout=subprocess.PIPE
@@ -160,8 +158,7 @@ class Application:
               , shell=False                                 # No shell needed
               )
         except:
-            report_error_with_backtrace('Unable to start wrapped executable ({})'.format(self.binary))
-            sys.exit(exitstatus.ExitStatus.failure)
+            raise RuntimeError('Unable to start wrapped executable ({})'.format(self.binary))
 
 
     def _out_lines_list(self, lines):
@@ -186,7 +183,7 @@ class Application:
         self._load_pp_module()
         if not self.pp_mod.Processor.want_to_handle_current_command():
             # Ok, replace self w/ wrapped executable
-            os.execv(self.binary, [self.binary] + sys.argv[1:])
+            os.execv(str(self.binary), [str(self.binary)] + sys.argv[1:])
             return exitstatus.ExitStatus.failure
 
         config = self._load_config(self.pp_mod.Processor.config_file_name(self.basename))
@@ -237,6 +234,6 @@ def main():
     except KeyboardInterrupt:
         return exitstatus.ExitStatus.failure
     except RuntimeError as ex:
-        log.eerror('Error: {}'.format(ex))
+        report_error_with_backtrace('Error: {}'.format(ex))
         return exitstatus.ExitStatus.failure
     return exitstatus.ExitStatus.success

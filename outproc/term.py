@@ -106,6 +106,7 @@ def _ioctl_GWINSZ(fd):
 
 
 def get_size():
+    # TODO Return named tuple
 
     cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)
 
