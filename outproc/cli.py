@@ -20,6 +20,7 @@
 
 
 # Project specific imports
+import outproc.pp
 from outproc.config import Config
 from outproc.logger import log
 from outproc.processing import Processor, report_error_with_backtrace, SYSCONFDIR
@@ -30,15 +31,17 @@ import exitstatus
 import fcntl
 import os
 import pathlib
+import pkgutil
 import select
 import subprocess
 import sys
 import traceback
 
 
-class Application(object):
+class Application:
 
     def __init__(self):
+        # TODO Use `pathlib`
         self.abspath = os.path.abspath(sys.argv[0])
         self.basename = os.path.basename(self.abspath)
         self.dirname = os.path.dirname(self.abspath)
@@ -48,17 +51,26 @@ class Application(object):
     def _handle_command_line(self):
         parser = argparse.ArgumentParser(description='Pluggable Output Processor')
         parser.add_argument(
+            '-l'
+          , '--list-modules'
+          , action='store_true'
+          , help='List available modules'
+          )
+        parser.add_argument(
             '-m'
           , '--module'
           , metavar='NAME'
           , help='Choose module to process input from STDIN'
           )
         args = parser.parse_args()
+
+        self.list_modules = args.list_modules
+
         # Override module name if running as `outproc`. I.e. in a command like this:
         #  $ /usr/bin/make 2>&1 | outproc -m make
         if args.module:
             self.basename = args.module
-        self.pipe_mode = True
+            self.pipe_mode = True
 
 
     def _find_wrapped_binary(self):
@@ -71,7 +83,15 @@ class Application(object):
                 break
         if self.binary is None:
             log.eerror('Command not found: {}'.format(self.basename))
-            sys.exit(1)
+            sys.exit(exitstatus.ExitStatus.failure)
+
+
+    def _list_pp_modules(self):
+        modules = [name for importer, name, ispkg in pkgutil.iter_modules(outproc.pp.__path__) if ispkg == False]
+
+        print('List of available modules:')
+        for m in modules:
+            print('  {}'.format(m))
 
 
     def _load_pp_module(self):
@@ -85,12 +105,12 @@ class Application(object):
               )
         except:
             report_error_with_backtrace('Failed to import module {}'.format(self.basename))
-            sys.exit(1)
+            sys.exit(exitstatus.ExitStatus.failure)
 
         # Make sure the module found has a Processor class
         if not hasattr(self.pp_mod, 'Processor') or not issubclass(self.pp_mod.Processor, Processor):
             log.eerror('Module {} does not provide class `Processor`'.format(self.pp_mod.__name__))
-            sys.exit(1)
+            sys.exit(exitstatus.ExitStatus.failure)
 
 
     def _load_config(self, config_file_name):
@@ -111,7 +131,7 @@ class Application(object):
             return Config(config_file_name_full)
         except:
             report_error_with_backtrace('Unable to load configuration data')
-            sys.exit(1)
+            sys.exit(exitstatus.ExitStatus.failure)
 
 
     def _create_output_processor(self, config):
@@ -120,7 +140,7 @@ class Application(object):
             return self.pp_mod.Processor(config, self.binary)
         except:
             report_error_with_backtrace('Unable to make a preprocessor instance')
-            sys.exit(1)
+            sys.exit(exitstatus.ExitStatus.failure)
 
 
     def _make_async(self, fd):
@@ -141,7 +161,7 @@ class Application(object):
               )
         except:
             report_error_with_backtrace('Unable to start wrapped executable ({})'.format(self.binary))
-            sys.exit(1)
+            sys.exit(exitstatus.ExitStatus.failure)
 
 
     def _out_lines_list(self, lines):
@@ -154,17 +174,20 @@ class Application(object):
         # Check the binary name
         if self.basename == 'outproc':
             self._handle_command_line()
-            if self.pipe_mode:
+            if self.list_modules:
+                self._list_pp_modules()
+                return exitstatus.ExitStatus.success
+            elif self.pipe_mode:
                 # TODO
                 log.eerror('Pipe mode not implemented')
-                sys.exit(1)
+                return exitstatus.ExitStatus.failure
 
         self._find_wrapped_binary()
         self._load_pp_module()
         if not self.pp_mod.Processor.want_to_handle_current_command():
             # Ok, replace self w/ wrapped executable
             os.execv(self.binary, [self.binary] + sys.argv[1:])
-            sys.exit(1)
+            return exitstatus.ExitStatus.failure
 
         config = self._load_config(self.pp_mod.Processor.config_file_name(self.basename))
         processor = self._create_output_processor(config)
@@ -203,13 +226,14 @@ class Application(object):
         result = None
         while result is None:
             result = process.poll()                         # Try to get child exit status
-        sys.exit(result)
+
+        return result
 
 
 def main():
     try:
         a = Application()
-        a.run()
+        return a.run()
     except KeyboardInterrupt:
         return exitstatus.ExitStatus.failure
     except RuntimeError as ex:

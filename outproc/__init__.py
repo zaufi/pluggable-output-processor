@@ -18,4 +18,4 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Set PEP396 version attribute
-__version__ = '0.16'
+__version__ = '0.16.1'

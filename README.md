@@ -28,17 +28,34 @@ Easy!
 
 For Gentoo users there is a [live ebuild][raw-ebuild] in my [repository][my-overlay].
 Also (for Gentoo users again ;-) `eselect` module from `contrib/` will be installed by the ebuild.
-Users of other distros have to make symlinks to required modules manually:
+Users of other distros have to make symlinks to required modules manually (replace `<install-prefix>`
+with your actual path):
 
-    $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/<module-name>
+    $ ln -s <install-prefix>/bin/outproc /usr/lib/outproc/bin/<module-name>
 
 and then make sure `/usr/lib/outproc/bin` placed __before__ `/usr/bin` (and anything else) in your
-user/system `PATH` environment. Available modules (plugins) can be found at `<python-site-packages-dir>/outproc/pp`.
-For example, to install the `gcc` module do the following:
+user/system `PATH` environment. The path `/usr/lib/outproc/bin` is just an example. You can choose
+whatever you like instead (e.g. `/home/<login>/.local/bin/` for user based install layout).
+List of available modules (plugins) can be obtained from command:
 
-    $ ln -s /usr/bin/outproc /usr/lib/outproc/bin/gcc
+    $ outproc -l
+    List of available modules:
+      c++
+      cc
+      cmake
+      diff
+      g++
+      gcc
+      make
+      mount
 
-Then you may edit `/etc/outproc/gcc.conf` to adjust color settings.
+For example, to install the `make` module do the following:
+
+    $ ln -s <install-prefix>/bin/outproc /usr/lib/outproc/bin/make
+
+Then you may edit `/etc/outproc/make.conf` to adjust color settings. Note that `gcc`, `g++`, `cc` and `c++`
+are the same module actually (named after typical GCC executables) and use the same `/etc/outproc/gcc.conf`
+config file.
 
 [raw-ebuild]: https://github.com/zaufi/zaufi-overlay/blob/master/dev-util/pluggable-output-processor/pluggable-output-processor-scm.ebuild
 [my-overlay]: https://github.com/zaufi/zaufi-overlay/ "My ebuilds overlay"

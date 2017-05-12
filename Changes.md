@@ -1,6 +1,17 @@
 Changes
 =======
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](http://keepachangelog.com/)
+and this project adheres to [Semantic Versioning](http://semver.org/).
+
+
+Version [Unreleased]
+--------------------
+
+* add `-l` option to list available modules
+
 Version 0.16
 ------------
 
@@ -40,3 +51,5 @@ Version 0.8
 * few improvements in `gcc` module
 * `make` module now can use `cmake` if found that latter running as its child
 * fix a 'crash' in `make`
+
+[Unreleased]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.16...HEAD

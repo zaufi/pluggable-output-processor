@@ -32,15 +32,17 @@ SYSCONFDIR = '/etc/outproc'
 _FORCE_PROCESSING_ENV = 'OUTPROC_FORCE_PROCESSING'
 
 
-class Processor(object):
+class Processor:
 
     def __init__(self, config, binary):
         self.config = config
         self.binary = binary
         self.read_buffer = b''
 
+
     def handle_line(self, line):
         return line
+
 
     def handle_block(self, block):
         self.read_buffer += block                           # Append just read block to a storage
@@ -56,18 +58,21 @@ class Processor(object):
                     )
             if line is not None:                            # Ignore/hide the line if line handler returns None
                 lines.append(line)
-            pos +=1                                         # Remove '\n' from the input
+            pos += 1                                        # Remove '\n' from the input
             self.read_buffer = self.read_buffer[pos:]       # Cut just processed line
             pos = self.read_buffer.find(b'\n')              # Is there some more line remain?
         return lines
+
 
     def eof(self):
         if self.read_buffer:
             return [self.handle_line(self.read_buffer.decode('utf-8'))]
 
+
     @staticmethod
     def config_file_name(module_name):
         return module_name + '.conf'
+
 
     @staticmethod
     def want_to_handle_current_command():
