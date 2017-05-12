@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+Version [Unreleased]
+--------------------
+
 Version [0.17]
 --------------
 
@@ -52,4 +55,5 @@ Version 0.8
 * `make` module now can use `cmake` if found that latter running as its child
 * fix a 'crash' in `make`
 
+[Unreleased]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.17...HEAD
 [0.17]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.16...version-0.17
