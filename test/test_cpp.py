@@ -22,7 +22,7 @@
 '''
 
 # Project specific imports
-from context import outproc, make_data_filename
+from context import make_data_filename
 from outproc.cpp_helpers import SimpleCppLexer, SnippetSanitizer, CodeFormatter
 
 # Standard imports

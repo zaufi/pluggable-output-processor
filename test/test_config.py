@@ -22,16 +22,12 @@
 '''
 
 # Project specific imports
-from context import outproc, make_data_filename
+from context import make_data_filename
 from outproc.config import Config
 
 # Standard imports
-import os
 import pytest
-import sys
-import termcolor
 
-sys.path.insert(0, '..')
 
 class config_tester:
     '''Unit tests for Config class'''

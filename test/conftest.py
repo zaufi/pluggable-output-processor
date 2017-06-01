@@ -18,13 +18,12 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Project specific imports
+from context import output_dir_base
 
 # Standard imports
-import os
 import pathlib
 import pytest
-import sys
-import unittest.mock
+import shutil
 
 
 # Add CLI option

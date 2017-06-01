@@ -21,6 +21,8 @@
     Helper functions reusable by various tests
 '''
 
+# Project specific imports
+
 # Standard imports
 import os
 import pathlib
@@ -31,9 +33,6 @@ import warnings
 
 # NOTE DO NOT REMOVE
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Project specific imports
-import outproc
 
 _data_dir = pathlib.Path(__file__).parent / 'data'
 

@@ -22,14 +22,11 @@
 '''
 
 # Project specific imports
-from context import outproc
 from outproc.config import Config
 from outproc.term import column_formatter, fg2bg, pos_to_offset
 
 # Standard imports
 import pathlib
-import sys
-import termcolor
 
 
 class term_module_tester:

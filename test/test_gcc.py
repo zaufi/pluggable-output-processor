@@ -22,12 +22,10 @@
 '''
 
 # Project specific imports
-from context import outproc
 from outproc.pp.gcc import _LOCATION_RE
 
 # Standard imports
 import pytest
-import sys
 
 
 class complier_cli_match_tester:

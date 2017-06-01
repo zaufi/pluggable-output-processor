@@ -22,14 +22,11 @@
 '''
 
 # Project specific imports
-from context import outproc
 from outproc.config import Config
 from outproc.pp.mount import Processor
 
 # Standard imports
 import pathlib
-import sys
-import termcolor
 
 
 class mount_processor_tester:
