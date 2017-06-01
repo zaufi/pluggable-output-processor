@@ -36,6 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 _data_dir = pathlib.Path(__file__).parent / 'data'
 
+
 def data_dir_base():
     return _data_dir
 
