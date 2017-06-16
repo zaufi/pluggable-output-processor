@@ -11,6 +11,9 @@ Version [Unreleased]
 --------------------
 
 * fix exception in `cmake` processor when latter called from `make` process
+* since recent KDE Frameworks 5 release, there was a strange bug, when moving
+  cursor above to 1 line act like moving on 2 lines instead. It looks like
+  somewhere lines count has moved to zero base or smth like this...
 
 Version [0.17]
 --------------

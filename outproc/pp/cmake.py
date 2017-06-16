@@ -25,6 +25,7 @@ import os
 import re
 import shlex
 
+
 _SUCCESS_RE = re.compile('^-- (Check|Looking|Performing Test|Detecting).*-{1,2} (works|done|yes|found|Success)$')
 _SUCCESS2_RE = re.compile('^-- Found .*:\s.*$')
 _FAILURE_RE = re.compile('^-- .* - (not found|Failed)$')
@@ -60,8 +61,8 @@ class Processor(ProcessorBase):
             # The line above is a begining of some test and here (in the `line`) a result of it
             # Move cursor to one line up and override it!
             lines = int(len(self.prev_line) / get_size()[1])
-            move_code = move_above(lines + 1)
-        self.prev_line = line
+            move_code = move_above(lines)
+        self.prev_line = line.strip()
         if _SUCCESS_RE.match(line) or _SUCCESS2_RE.match(line):
             return self._colorize(move_code + self.success, line)
         if _FAILURE_RE.match(line):
