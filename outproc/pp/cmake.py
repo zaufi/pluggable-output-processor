@@ -28,7 +28,7 @@ import shlex
 
 _SUCCESS_RE = re.compile('^-- (Check|Looking|Performing Test|Detecting).*-{1,2} (works|done|yes|found|Success)$')
 _SUCCESS2_RE = re.compile('^-- Found .*:\s.*$')
-_FAILURE_RE = re.compile('^-- .* - (not found|Failed)$')
+_FAILURE_RE = re.compile('^-- .* - (no|not found|Failed)$')
 _FATAL_RE = re.compile('^CMake Error.*')
 
 
