@@ -39,7 +39,7 @@ _SKIPPING_WARN = re.compile('\[ skipping [0-9]+ instantiation contexts[^\]]+\]')
 _WITH_LIST_START = ' [with '
 _HELP_LINE = re.compile('^  (?P<option>-\S*)(?:\s+(?P<text>.*)|$)?')
 # Do-Not-Handle options
-_DNH_OPTIONS = ['-M', '-MM', '-MF', '-MG', '-MP', '-MT', '-MQ', '-MD', '-MMD', '--help']
+_DNH_OPTIONS = ['-M', '-MM', '-MG', '-MP', '-MT', '-MQ', '--help']
 
 # Introduce a named tuple class
 Range = collections.namedtuple('Range', ['start', 'end'])
