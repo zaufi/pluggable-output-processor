@@ -41,9 +41,9 @@ import traceback
 class Application:
 
     def __init__(self):
-        path = pathlib.Path(sys.argv[0])
-        self.basename = path.name
-        self.dirname = path.resolve().parent
+        self.executable_name = pathlib.Path(sys.argv[0])
+        self.real_executable_name = self.executable_name.resolve()
+        self.basename = self.executable_name.name
         self.pipe_mode = False
 
 
@@ -77,10 +77,8 @@ class Application:
         self.binary = None
         for path in map(lambda p: pathlib.Path(p), os.environ['PATH'].split(os.pathsep)):
             binary = path / self.basename
-            # Current path not the same as our dirname,
-            # and there is a binary exists named same as our name,
-            # and finally there is no `outproc` in path (which is possible other install (instance) of this tool)
-            if path != self.dirname and binary.is_file() and 'outproc' not in path.parts:
+            # If given binary exists and is not the same executable as the current one
+            if binary.exists() and binary.resolve() != self.real_executable_name:
                 self.binary = binary
                 break
 
@@ -169,7 +167,7 @@ class Application:
 
     def run(self):
         # Check the binary name
-        if self.basename == 'outproc':
+        if self.executable_name == self.real_executable_name:
             self._handle_command_line()
             if self.list_modules:
                 self._list_pp_modules()
@@ -231,9 +229,12 @@ def main():
     try:
         a = Application()
         return a.run()
+
     except KeyboardInterrupt:
         return exitstatus.ExitStatus.failure
+
     except RuntimeError as ex:
         report_error_with_backtrace('Error: {}'.format(ex))
         return exitstatus.ExitStatus.failure
+
     return exitstatus.ExitStatus.success

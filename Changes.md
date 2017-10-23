@@ -7,11 +7,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
-Version [Unreleased]
---------------------
+Version [0.19]
+--------------
+
+* allow to put override symlinks to any location. The only requirement is
+  that location must be the very first in `PATH`.
+
+Version [0.18]
+--------------
 
 * fix exception in `cmake` processor when latter called from `make` process
-* since recent KDE Frameworks 5 release, there was a strange bug, when moving
+* since the recent KDE Frameworks 5 release, there was a strange bug, when moving
   cursor above to 1 line act like moving on 2 lines instead. It looks like
   somewhere lines count has moved to zero base or smth like this...
 
@@ -60,5 +66,7 @@ Version 0.8
 * `make` module now can use `cmake` if found that latter running as its child
 * fix a 'crash' in `make`
 
-[Unreleased]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.17...HEAD
+[Unreleased]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.19...HEAD
+[0.19]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.18...version-0.19
+[0.18]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.17...version-0.18
 [0.17]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.16...version-0.17
