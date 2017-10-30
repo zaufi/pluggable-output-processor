@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+Version [0.20]
+--------------
+
+* allow multiple parallel installations of the package. For example when
+  one have a system-wide install and per user (into `~/.local`) maden via
+  `pip install --editable=.` (or `./setup.py develop`).
+
 Version [0.19]
 --------------
 
@@ -66,7 +73,8 @@ Version 0.8
 * `make` module now can use `cmake` if found that latter running as its child
 * fix a 'crash' in `make`
 
-[Unreleased]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.19...HEAD
+[Unreleased]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.20...HEAD
+[0.20]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.19...version-0.20
 [0.19]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.18...version-0.19
 [0.18]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.17...version-0.18
 [0.17]: https://github.com/zaufi/pluggable-output-processor/compare/version-0.16...version-0.17
