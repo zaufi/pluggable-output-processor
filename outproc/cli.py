@@ -78,7 +78,7 @@ class Application:
         for path in map(lambda p: pathlib.Path(p), os.environ['PATH'].split(os.pathsep)):
             binary = path / self.basename
             # If given binary exists and is not the same executable as the current one
-            if binary.exists() and binary.resolve() != self.real_executable_name:
+            if binary.exists() and binary.resolve() != self.real_executable_name and 'outproc' not in binary.parts:
                 self.binary = binary
                 break
 
