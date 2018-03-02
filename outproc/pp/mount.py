@@ -84,19 +84,22 @@ class Processor(ProcessorBase):
                 self.reminder = line
                 break
 
-            columns = line.decode('utf-8').split(' ')
-            # TODO ATTENTION Other locales will cause assertion fail
-            assert columns[1] == 'on' and columns[3] == 'type'
+            on_sep_columns = line.decode('utf-8').split(' on ')
+            assert len(on_sep_columns) == 2
+            type_sep_columns = on_sep_columns[1].split(' type ')
+            assert len(type_sep_columns) == 2
+            columns = on_sep_columns[:1] + type_sep_columns[:1] + type_sep_columns[1].split(' ')
+
             # TODO Unit tests for this piece of crap!
-            if 0 < self.mount_point_max_size and self.mount_point_max_size < len(columns[2]):
+            if 0 < self.mount_point_max_size and self.mount_point_max_size < len(columns[1]):
                 size = 0
-                for i, p in enumerate(columns[2].split('/')[::-1]):
+                for i, p in enumerate(columns[1].split('/')[::-1]):
                     if self.mount_point_max_size < (size + len(p) + 1):
                         break
                     size += len(p) + 1
-                truncate_point = len(columns[2]) - size
-                columns[2] = self.trim_char + columns[2][truncate_point:]
-            record = (columns[0], columns[2], columns[4], str(columns[5])[1:len(columns[5])-1])
+                truncate_point = len(columns[1]) - size
+                columns[1] = self.trim_char + columns[1][truncate_point:]
+            record = (columns[0], columns[1], columns[2], str(columns[3])[1:len(columns[3])-1])
             self.max_fields = self._update_max_lengths(self.max_fields, record)
             self.records.append(record)
         # NOTE Do not return anything... wait for all blocks (lines)...
